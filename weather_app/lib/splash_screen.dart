@@ -94,9 +94,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Column(
                 children: [
                    Text(
-                    "Insightful Bangladesh",
+                    "BD Weather App",
                     style: GoogleFonts.outfit(
-                      fontSize: 28,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Colors.teal.shade900,
                       letterSpacing: 1.2,
