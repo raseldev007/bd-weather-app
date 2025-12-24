@@ -6,21 +6,21 @@ import 'profile_service.dart';
 import 'weather_insight_service.dart';
 
 class HomeInsights {
-  final Map<String, dynamic> current_weather;
-  final Map<String, dynamic> primary_insight;
-  final List<dynamic> hourly_risk;
+  final Map<String, dynamic> currentWeather;
+  final Map<String, dynamic> primaryInsight;
+  final List<dynamic> hourlyRisk;
 
   HomeInsights({
-    required this.current_weather,
-    required this.primary_insight,
-    required this.hourly_risk,
+    required this.currentWeather,
+    required this.primaryInsight,
+    required this.hourlyRisk,
   });
 
   factory HomeInsights.fromJson(Map<String, dynamic> json) {
     return HomeInsights(
-      current_weather: json['current_weather'],
-      primary_insight: json['primary_insight'],
-      hourly_risk: json['hourly_risk'],
+      currentWeather: json['current_weather'],
+      primaryInsight: json['primary_insight'],
+      hourlyRisk: json['hourly_risk'],
     );
   }
 }
@@ -66,9 +66,9 @@ class WeatherService extends ChangeNotifier {
         _homeInsights = HomeInsights.fromJson(data);
         
         // --- State Transition Detection ---
-        final currentTemp = (_homeInsights?.current_weather['temp'] as num).toDouble();
-        final currentHumidity = (_homeInsights?.current_weather['humidity'] as num).toDouble();
-        final currentCondition = _homeInsights?.current_weather['condition'] as String;
+        final currentTemp = (_homeInsights?.currentWeather['temp'] as num).toDouble();
+        final currentHumidity = (_homeInsights?.currentWeather['humidity'] as num).toDouble();
+        final currentCondition = _homeInsights?.currentWeather['condition'] as String;
         const lang = 'en'; // Ideally passed from UI or Profile
 
         OutcomeState? newWorkState;
@@ -95,7 +95,7 @@ class WeatherService extends ChangeNotifier {
         );
 
         // Impact Score Logic: Increment if insight is decision-worthy
-        final severity = _homeInsights?.primary_insight['severity'];
+        final severity = _homeInsights?.primaryInsight['severity'];
         if (severity == 'high' || severity == 'emergency' || profile.mode != UserMode.general) {
           profile.incrementImpactScore();
         }
@@ -104,7 +104,7 @@ class WeatherService extends ChangeNotifier {
         prefs.setString('cached_home_insights', json.encode(data));
       }
     } catch (e) {
-      print("Error fetching home insights: $e");
+      debugPrint("Error fetching home insights: $e");
     }
     _isLoading = false;
     notifyListeners();

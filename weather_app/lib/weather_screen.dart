@@ -78,9 +78,9 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
     final insights = weatherService.homeInsights;
     final isLoading = weatherService.isLoading;
     
-    final condition = insights?.current_weather['condition'] ?? 'Clear';
-    final temp = (insights?.current_weather['temperature'] ?? 20).toDouble();
-    final humidity = (insights?.current_weather['humidity'] ?? 50).toDouble();
+    final condition = insights?.currentWeather['condition'] ?? 'Clear';
+    final temp = (insights?.currentWeather['temperature'] ?? 20).toDouble();
+    final humidity = (insights?.currentWeather['humidity'] ?? 50).toDouble();
 
     // --- Transition Notification Logic ---
     if (profile.lastTransitionTitle != null && profile.lastTransitionBody != null) {
@@ -225,7 +225,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
 
   Widget _buildPrimaryInsightCard(HomeInsights? insights, bool isBn, bool isEmergency) {
     if (insights == null) return const SizedBox.shrink();
-    final primary = insights.primary_insight;
+    final primary = insights.primaryInsight;
     
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
