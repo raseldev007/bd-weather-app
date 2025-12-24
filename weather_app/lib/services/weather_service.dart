@@ -69,7 +69,7 @@ class WeatherService extends ChangeNotifier {
         final currentTemp = (_homeInsights?.current_weather['temp'] as num).toDouble();
         final currentHumidity = (_homeInsights?.current_weather['humidity'] as num).toDouble();
         final currentCondition = _homeInsights?.current_weather['condition'] as String;
-        final lang = 'en'; // Ideally passed from UI or Profile
+        const lang = 'en'; // Ideally passed from UI or Profile
 
         OutcomeState? newWorkState;
         OutcomeState? newFarmState;

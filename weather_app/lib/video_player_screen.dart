@@ -79,9 +79,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
                     children: [
-                      Text(
+                      const Text(
                         "0:45",
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                       Expanded(
                         child: Slider(
@@ -91,9 +91,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                           onChanged: (val) => setState(() => progress = val),
                         ),
                       ),
-                      Text(
+                      const Text(
                         "2:30",
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ],
                   ),

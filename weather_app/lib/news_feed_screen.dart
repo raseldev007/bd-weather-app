@@ -25,7 +25,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not launch original article.')),
+          const SnackBar(content: Text('Could not launch original article.')),
         );
       }
     }
