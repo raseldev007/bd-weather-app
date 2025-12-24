@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.sira.forecasting"
-    compileSdk = 35
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,7 +26,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 21 
-        targetSdk = 35
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true 
@@ -39,10 +39,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-}
-
-dependencies {
-    implementation("androidx.multidex:multidex:2.0.1")
 }
 
 flutter {
