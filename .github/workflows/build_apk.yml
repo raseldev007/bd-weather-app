@@ -27,6 +27,11 @@ jobs:
         working-directory: ./weather_app
         run: flutter pub get
 
+      - name: Generate Debug Keystore
+        run: |
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        continue-on-error: true
+
       - name: Build APK
         working-directory: ./weather_app
         run: flutter build apk --release --split-per-abi
