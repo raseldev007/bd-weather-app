@@ -1,0 +1,39 @@
+{
+    "project_info": {
+        "project_number": "669799446176",
+        "project_id": "sira-weather-forcasting-app",
+        "storage_bucket": "sira-weather-forcasting-app.firebasestorage.app"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:669799446176:android:2a98c4665d8a1873ca3bc5",
+                "android_client_info": {
+                    "package_name": "com.sira.forecasting"
+                }
+            },
+            "oauth_client": [
+                {
+                    "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
+                    "client_type": 3
+                }
+            ],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyDxfvFMuPcvb7UAUKSa9zIlbd1DZ5yZSLU"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": [
+                        {
+                            "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
+                            "client_type": 3
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}
