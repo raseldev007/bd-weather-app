@@ -47,6 +47,35 @@ jobs:
           }
           EOF
 
+      - name: Create dummy google-services.json
+        working-directory: ./weather_app
+        run: |
+          echo "Creating dummy google-services.json..."
+          cat <<EOF > android/app/google-services.json
+          {
+            "project_info": {
+              "project_number": "123456789012",
+              "project_id": "dummy-project",
+              "storage_bucket": "dummy-project.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:dummyappid",
+                  "android_client_info": {
+                    "package_name": "com.sira.forecasting"
+                  }
+                },
+                "api_key": [
+                  {
+                    "current_key": "dummy-api-key"
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+
       - name: Generate Debug Keystore
         run: |
           mkdir -p ~/.android
