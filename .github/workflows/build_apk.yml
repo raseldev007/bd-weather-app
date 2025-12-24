@@ -27,6 +27,26 @@ jobs:
         working-directory: ./weather_app
         run: flutter pub get
 
+      - name: Create dummy firebase_options.dart
+        working-directory: ./weather_app
+        run: |
+          echo "Creating dummy firebase_options.dart..."
+          cat <<EOF > lib/firebase_options.dart
+          import 'package:firebase_core/firebase_core.dart';
+          import 'package:flutter/foundation.dart';
+
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform {
+              return const FirebaseOptions(
+                apiKey: 'dummy',
+                appId: 'dummy',
+                messagingSenderId: 'dummy',
+                projectId: 'dummy',
+              );
+            }
+          }
+          EOF
+
       - name: Generate Debug Keystore
         run: |
           mkdir -p ~/.android
