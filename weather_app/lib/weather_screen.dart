@@ -24,7 +24,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
   final Map<String, Map<String, double>> divisions = {
     'Dhaka': {'lat': 23.8103, 'lng': 90.4125},
     'Chattogram': {'lat': 22.3569, 'lng': 91.7832},
-    'Rajshahi': {'lat': 24.3636, '88.6241': 0}, // Fixed coordinate key error
+    'Rajshahi': {'lat': 24.3636, 'lng': 88.6241},
     'Khulna': {'lat': 22.8456, 'lng': 89.5403},
     'Barishal': {'lat': 22.7010, 'lng': 90.3535},
     'Sylhet': {'lat': 24.8949, 'lng': 91.8687},

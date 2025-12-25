@@ -145,10 +145,14 @@ class WeatherService extends ChangeNotifier {
            farmCopy = WeatherInsightService.getNotificationCopy(profile.lastFarmState, newFarmState, UserMode.farmer, lang);
         }
 
+        // Generate Primary Insight Structure for UI
+        final adviceString = WeatherInsightService.getDailyAdvice(condition, currentTemp, currentHumidity, profile.mode, lang);
+        final adviceList = adviceString.split('. ').where((s) => s.isNotEmpty).toList();
+        
         // Construct HomeInsights object
         final internalData = {
           "current_weather": {
-            "temp": currentTemp,
+            "temperature": currentTemp,
             "condition": condition,
             "humidity": currentHumidity,
             "wind": windSpeed,
@@ -156,11 +160,20 @@ class WeatherService extends ChangeNotifier {
             "description": description
           },
           "primary_insight": {
-            "title": insightTitle,
-            "body": insightBody,
-            "severity": severity
+            "summary": insightTitle,
+            "bn_summary": insightTitle, // Placeholder translation
+            "actions": adviceList.isNotEmpty ? adviceList : [insightBody],
+            "bn_actions": adviceList.isNotEmpty ? adviceList : [insightBody], // Placeholder translation
+            "severity": severity,
+            "why_this_alert": {
+               "trigger": "Current weather conditions",
+               "bn_trigger": "বর্তমান আবহাওয়া পরিস্থিতি",
+               "who_is_affected": "Everyone",
+               "bn_who_is_affected": "সবাই",
+               "time_window": "Now"
+            }
           },
-          "hourly_risk": [] // Placeholder as OWM Free API doesn't give hourly risk easily without 2.5/forecast call
+          "hourly_risk": [] 
         };
 
         _homeInsights = HomeInsights.fromJson(internalData);
