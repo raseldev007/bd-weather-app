@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 import 'profile_service.dart';
 import 'weather_insight_service.dart';
 
@@ -30,7 +31,10 @@ class WeatherService extends ChangeNotifier {
   List<Map<String, dynamic>> _alerts = [];
   Map<String, dynamic>? _forecast;
   bool _isLoading = false;
-  final String _baseUrl = "http://localhost:8000/api/v1";
+  
+  // API Configuration
+  final String _apiKey = '8fec44d87737fac7b4fed3d7be924b7b';
+  final String _baseUrl = 'https://api.openweathermap.org/data/2.5';
 
   HomeInsights? get homeInsights => _homeInsights;
   List<Map<String, dynamic>> get alerts => _alerts;
@@ -54,39 +58,106 @@ class WeatherService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied, we cannot request permissions.');
+    } 
+
+    return await Geolocator.getCurrentPosition();
+  }
+
   Future<void> fetchHomeInsights(String district, ProfileService profile) async {
     _isLoading = true;
     notifyListeners();
     try {
-      final response = await http.get(
-        Uri.parse("$_baseUrl/insights/home?district=$district&mode=${profile.mode.name}"),
+      Position position = await _determinePosition();
+      
+      // Fetch Current Weather from OWM
+      final weatherResponse = await http.get(
+        Uri.parse("$_baseUrl/weather?lat=${position.latitude}&lon=${position.longitude}&appid=$_apiKey&units=metric"),
       );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        _homeInsights = HomeInsights.fromJson(data);
-        
-        // --- State Transition Detection ---
-        final currentTemp = (_homeInsights?.currentWeather['temp'] as num).toDouble();
-        final currentHumidity = (_homeInsights?.currentWeather['humidity'] as num).toDouble();
-        final currentCondition = _homeInsights?.currentWeather['condition'] as String;
-        const lang = 'en'; // Ideally passed from UI or Profile
 
+      if (weatherResponse.statusCode == 200) {
+        final data = json.decode(weatherResponse.body);
+        
+        // Transform OWM data to app internal model
+        final currentTemp = (data['main']['temp'] as num).toDouble();
+        final currentHumidity = (data['main']['humidity'] as num).toDouble();
+        final condition = data['weather'][0]['main'] as String;
+        final description = data['weather'][0]['description'] as String;
+        final city = data['name'];
+
+        // --- Calculate Insights Locally ---
+        const lang = 'en'; 
+        
         OutcomeState? newWorkState;
         OutcomeState? newFarmState;
         Map<String, String> workCopy = {};
         Map<String, String> farmCopy = {};
 
+        // Generate Primary Insight based on temp for now (can be expanded)
+        String insightTitle = "Safe Conditions";
+        String insightBody = "Weather is suitable for outdoor activities.";
+        String severity = "safe";
+
+        if (currentTemp > 35) {
+          insightTitle = "Heat Warning";
+          insightBody = "Extreme heat. Stay hydrated and avoid direct sun.";
+          severity = "high";
+        } else if (condition.toLowerCase().contains("rain")) {
+          insightTitle = "Rain Alert";
+          insightBody = "Rain detected. Carry an umbrella.";
+          severity = "medium";
+        }
+
         if (profile.isPremium) {
-           final workData = WeatherInsightService.getWorkSafetyStatus(currentTemp, currentHumidity, currentCondition, lang);
+           // Reuse existing logic from WeatherInsightService if applicable
+           final workData = WeatherInsightService.getWorkSafetyStatus(currentTemp, currentHumidity, condition, lang);
            newWorkState = workData['state'] as OutcomeState;
            workCopy = WeatherInsightService.getNotificationCopy(profile.lastWorkState, newWorkState, UserMode.worker, lang);
 
-           final farmData = WeatherInsightService.getCropRiskData(currentTemp, currentCondition, 0.0, lang); // Assuming wind 0 for now
+           final farmData = WeatherInsightService.getCropRiskData(currentTemp, condition, 0.0, lang); // Wind 0 for now
            newFarmState = farmData['state'] as OutcomeState;
            farmCopy = WeatherInsightService.getNotificationCopy(profile.lastFarmState, newFarmState, UserMode.farmer, lang);
         }
 
-        // Update Profile with new states and notification copy if transition occurred
+        // Construct HomeInsights object
+        final internalData = {
+          "current_weather": {
+            "temp": currentTemp,
+            "condition": condition,
+            "humidity": currentHumidity,
+            "wind": data['wind']['speed'],
+            "district": city,
+            "description": description
+          },
+          "primary_insight": {
+            "title": insightTitle,
+            "body": insightBody,
+            "severity": severity
+          },
+          "hourly_risk": [] // Placeholder as OWM Free API doesn't give hourly risk easily without 2.5/forecast call
+        };
+
+        _homeInsights = HomeInsights.fromJson(internalData);
+
+        // Update Profile logic
         await profile.updateStates(
           workState: newWorkState,
           farmState: newFarmState,
@@ -94,58 +165,28 @@ class WeatherService extends ChangeNotifier {
           body: profile.mode == UserMode.worker ? workCopy['body'] : farmCopy['body'],
         );
 
-        // Impact Score Logic: Increment if insight is decision-worthy
-        final severity = _homeInsights?.primaryInsight['severity'];
-        if (severity == 'high' || severity == 'emergency' || profile.mode != UserMode.general) {
-          profile.incrementImpactScore();
-        }
-        
+        // Save to cache
         final prefs = await SharedPreferences.getInstance();
-        prefs.setString('cached_home_insights', json.encode(data));
+        prefs.setString('cached_home_insights', json.encode(internalData));
       }
     } catch (e) {
-      debugPrint("Error fetching home insights: $e");
+      debugPrint("Error fetching live weather: $e");
     }
     _isLoading = false;
     notifyListeners();
   }
 
   Future<void> fetchAlerts(String district) async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-      final response = await http.get(Uri.parse("$_baseUrl/alerts?district=$district"));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        _alerts = List<Map<String, dynamic>>.from(data['alerts']);
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setString('cached_alerts', json.encode(_alerts));
-      }
-    } catch (e) {
-      print("Error fetching alerts: $e");
-    }
-    _isLoading = false;
+    // OWM Free tier doesn't support alerts API, keeping empty or mock implementation for now
+    _alerts = [];
     notifyListeners();
   }
 
   Future<void> fetchForecast(String district) async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-      final response = await http.get(Uri.parse("$_baseUrl/forecast?district=$district")).timeout(const Duration(seconds: 3));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        _forecast = data;
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setString('cached_forecast', json.encode(data));
-      } else {
-        _setForecastFallback();
-      }
-    } catch (e) {
-      print("Error fetching forecast: $e");
-      _setForecastFallback();
-    }
-    _isLoading = false;
+    // For 7 day forecast, OWM OneCall is needed (paid/separate). 
+    // Standard callback for 5 day / 3 hour exists but requires more parsing.
+    // Keeping fallback for now to avoid breaking UI.
+    _setForecastFallback();
     notifyListeners();
   }
 
@@ -159,19 +200,19 @@ class WeatherService extends ChangeNotifier {
         {"time": "11 PM", "temp": "26°C", "cond": "Clear", "bn_time": "রাত ১১টা", "bn_cond": "পরিষ্কার"},
       ],
       'comparison': {
-        "comparisonText": "2°C Warmer than yesterday",
-        "bn_comparisonText": "গতকাল থেকে ২°C বেশি গরম",
-        "trend": "up"
+        "comparisonText": "No historical data",
+        "bn_comparisonText": "কোনো ঐতিহাসিক তথ্য নেই",
+        "trend": "neutral"
       },
       'confidence': {
-        "level": "High",
-        "bnLevel": "উচ্চ",
-        "text": "90% match with historical patterns",
-        "bn_text": "ঐতিহাসিক ধরণগুলোর সাথে ৯০% মিল",
+        "level": "N/A",
+        "bnLevel": "প্রযোজ্য নয়",
+        "text": "Requires Premium API",
+        "bn_text": "প্রিমিয়াম API প্রয়োজন",
       },
       'weekly_brief': {
-        "text": "Expect heavy rain by Thursday. Keep umbrellas ready.",
-        "bn_text": "বৃহস্পতিবার নাগাদ ভারী বৃষ্টির সম্ভাবনা। ছাতা সাথে রাখুন।"
+        "text": "Live forecast coming soon.",
+        "bn_text": "লাইভ পূর্বাভাস শীঘ্রই আসছে।"
       }
     };
   }
