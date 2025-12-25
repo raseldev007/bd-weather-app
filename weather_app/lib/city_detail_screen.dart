@@ -148,7 +148,7 @@ class _CityDetailScreenState extends State<CityDetailScreen> {
         children: [
           Text(isBn ? "কার্যকর পরামর্শ" : "Actionable Advice", style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 16),
-          _buildDetailRow(Icons.lightbulb, isBn ? "পরামর্শ" : "Knowledge", WeatherInsightService.getDailyAdvice(condition, temp, humidity, profile.mode, lang)),
+          _buildDetailRow(Icons.lightbulb, isBn ? "পরামর্শ" : "Knowledge", WeatherInsightService.getDailyAdvice(condition, temp, humidity, lang)),
           Divider(color: Colors.white.withOpacity(0.1)),
           _buildDetailRow(Icons.checkroom, isBn ? "পোশাক" : "Clothing", WeatherInsightService.getOutfitRecommendation(condition, temp, lang)),
           Divider(color: Colors.white.withOpacity(0.1)),

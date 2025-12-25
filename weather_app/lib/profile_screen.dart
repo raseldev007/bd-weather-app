@@ -95,41 +95,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildInfoTile(isBn ? "ইমেইল" : "Email", profile.email, Icons.email),
                       _buildInfoTile(isBn ? "ঠিকানা" : "Location", profile.location, Icons.location_on),
                       const Divider(height: 40),
-                      Text(isBn ? "বিশেষায়িত মোড" : "Specialized Mode", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          _buildModeChip(UserMode.general, isBn ? "সাধারণ" : "General", profile.mode),
-                          _buildModeChip(UserMode.farmer, isBn ? "কৃষক" : "Farmer", profile.mode),
-                          _buildModeChip(UserMode.worker, isBn ? "শ্রমিক" : "Worker", profile.mode),
-                          _buildModeChip(UserMode.student, isBn ? "শিক্ষার্থী" : "Student", profile.mode),
-                        ],
-                      ),
-                      const Divider(height: 48),
-                      if (profile.isPremium) ...[
-                        Text(isBn ? "প্রিমিয়ম সেটিংস" : "Premium Settings", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const SizedBox(height: 12),
-                        SwitchListTile(
-                          value: profile.dailySummaryEnabled,
-                          onChanged: (val) => profile.setDailySummaryEnabled(val),
-                          title: Text(isBn ? "দৈনিক মোড সারসংক্ষেপ" : "Daily Mode Summary"),
-                          subtitle: Text(isBn ? "প্রতিদিন সকালে দিনভর ঝুঁকির সারসংক্ষেপ পান" : "Get a morning summary of daily risks"),
-                          secondary: const Icon(Icons.summarize_outlined, color: Colors.teal),
-                        ),
-                        const Divider(height: 32),
-                      ],
+                      
                       ListTile(
                         onTap: () async {
                           // 1. Sign Out from Auth Service (Firebase/Google)
                           final authService = Provider.of<AuthService>(context, listen: false);
                           await authService.signOut();
                           
-                          // 2. Clear Profile State (Optional, but good for cleanup)
+                          // 2. Clear Profile State
                           if (context.mounted) {
                              Provider.of<ProfileService>(context, listen: false).setLoggedIn(false);
                           
-                             // 3. Navigate to Login Screen (Remove all previous routes)
+                             // 3. Navigate to Login Screen
                              Navigator.pushAndRemoveUntil(
                                context, 
                                MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -174,18 +151,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildModeChip(UserMode mode, String label, UserMode currentMode) {
-    final isSelected = mode == currentMode;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (val) {
-        if (val) {
-          Provider.of<ProfileService>(context, listen: false).updateMode(mode);
-        }
-      },
-      selectedColor: Colors.teal,
-      labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
-    );
-  }
+
 }

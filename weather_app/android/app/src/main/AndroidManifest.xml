@@ -37,6 +37,9 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <meta-data
+            android:name="com.google.android.gms.location.FusedLocationProviderClient"
+            android:value="true"/>
+        <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDxfvFMuPcvb7UAUKSa9zIlbd1DZ5yZSLU"/>
     </application>

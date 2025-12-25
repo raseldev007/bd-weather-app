@@ -1,240 +1,140 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geolocator/geolocator.dart';
-import 'profile_service.dart';
-import 'weather_insight_service.dart';
+import 'package:http/http.dart' as http;
+import '../config/weather_config.dart';
 
-class HomeInsights {
-  final Map<String, dynamic> currentWeather;
-  final Map<String, dynamic> primaryInsight;
-  final List<dynamic> hourlyRisk;
-
-  HomeInsights({
-    required this.currentWeather,
-    required this.primaryInsight,
-    required this.hourlyRisk,
-  });
-
-  factory HomeInsights.fromJson(Map<String, dynamic> json) {
-    return HomeInsights(
-      currentWeather: json['current_weather'],
-      primaryInsight: json['primary_insight'],
-      hourlyRisk: json['hourly_risk'],
+class WeatherService {
+  Future<Map<String, dynamic>> getCurrentByLocation(double lat, double lon) async {
+    final uri = Uri.https(
+      WeatherConfig.currentBase,
+      "/data/2.5/weather",
+      {
+        "lat": lat.toString(),
+        "lon": lon.toString(),
+        "appid": WeatherConfig.apiKey,
+        "units": WeatherConfig.units,
+      },
     );
-  }
-}
 
-class WeatherService extends ChangeNotifier {
-  HomeInsights? _homeInsights;
-  List<Map<String, dynamic>> _alerts = [];
-  Map<String, dynamic>? _forecast;
-  bool _isLoading = false;
-  
-  // API Configuration
-  final String _apiKey = '8fec44d87737fac7b4fed3d7be924b7b';
-  final String _baseUrl = 'https://api.openweathermap.org/data/2.5';
-
-  HomeInsights? get homeInsights => _homeInsights;
-  List<Map<String, dynamic>> get alerts => _alerts;
-  Map<String, dynamic>? get forecast => _forecast;
-  bool get isLoading => _isLoading;
-  bool get isEmergency => _alerts.any((a) => a['severity'] == 'emergency');
-
-  WeatherService() {
-    _loadFromCache();
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw Exception("Current weather failed: ${res.statusCode} ${res.body}");
+    }
+    return jsonDecode(res.body) as Map<String, dynamic>;
   }
 
-  Future<void> _loadFromCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cachedInsights = prefs.getString('cached_home_insights');
-    final cachedAlerts = prefs.getString('cached_alerts');
-    final cachedForecast = prefs.getString('cached_forecast');
-
-    if (cachedInsights != null) _homeInsights = HomeInsights.fromJson(json.decode(cachedInsights));
-    if (cachedAlerts != null) _alerts = List<Map<String, dynamic>>.from(json.decode(cachedAlerts));
-    if (cachedForecast != null) _forecast = json.decode(cachedForecast);
-    notifyListeners();
-  }
-
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
+  /// OpenWeather One Call 3.0 or 2.5 Forecast fallback
+  /// The user requested 7-day forecast. Standard One Call 3.0 requires subscription.
+  /// If this fails, we might need a fallback logic in Provider or here.
+  Future<Map<String, dynamic>> get7DayForecast(double lat, double lon) async {
+    // Attempting One Call API as requested
+    final uri = Uri.https(
+      WeatherConfig.oneCallBase,
+      "/data/2.5/forecast", // FALLBACK to 5-day/3-hour free endpoint first because OneCall 3.0 usually requires strict payment method on file even for free tier
+      {
+        "lat": lat.toString(),
+        "lon": lon.toString(),
+        "appid": WeatherConfig.apiKey,
+        "units": WeatherConfig.units,
+      },
+    );
+    
+    // Note: To strictly follow "One Call" prompt we would use /data/3.0/onecall. 
+    // However, without knowing if user has payment set up, /data/2.5/forecast is safer for "Free" keys.
+    // I will try to implement a robust parser that can handle the 2.5/forecast response 
+    // and make it LOOK like daily data for the UI, or if 3.0 works use that.
+    
+    // Let's stick to the prompt's request for "OneUnifiedWeatherFetchingRule" but use the safer free endpoint for now to avoid breaking the app
+    // unless I'm sure. 
+    // Actually, let's try the user's requested One Call URL but handle failure?
+    // The user explicitly gave code for /data/3.0/onecall. I will use it but add a try/catch fallback to 2.5/forecast.
+    
+    try {
+        final oneCallUri = Uri.https(
+          "api.openweathermap.org",
+          "/data/3.0/onecall",
+          {
+            "lat": lat.toString(),
+            "lon": lon.toString(),
+            "appid": WeatherConfig.apiKey,
+            "units": WeatherConfig.units,
+            "exclude": "minutely,hourly,alerts",
+          },
+        );
+        
+        final res = await http.get(oneCallUri);
+        if (res.statusCode == 200) {
+           final data = jsonDecode(res.body) as Map<String, dynamic>;
+           if (data["daily"] is List) {
+             final daily = List.from(data["daily"]);
+             data["daily"] = daily.take(7).toList();
+           }
+           return data;
+        }
+    } catch (e) {
+      // Fallthrough
     }
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
+    // Fallback to Free 5 Day / 3 Hour
+    final fallbackUri = Uri.https(
+      "api.openweathermap.org",
+      "/data/2.5/forecast",
+      {
+        "lat": lat.toString(),
+        "lon": lon.toString(),
+        "appid": WeatherConfig.apiKey,
+        "units": WeatherConfig.units,
+      },
+    );
+    
+    final res = await http.get(fallbackUri);
+    if (res.statusCode != 200) {
+      throw Exception("Forecast failed: ${res.statusCode} ${res.body}");
     }
     
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied, we cannot request permissions.');
-    } 
-
-    return await Geolocator.getCurrentPosition();
+    // Map 3-hourly 5-day forecast to "Daily" format for UI, but keep "hourly" for timelines
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    return _mapForecastToDaily(data);
   }
 
-  Future<void> fetchHomeInsights(String district, ProfileService profile) async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-      Position position = await _determinePosition();
-      
-      // Fetch Current Weather from OWM
-      final weatherResponse = await http.get(
-        Uri.parse("$_baseUrl/weather?lat=${position.latitude}&lon=${position.longitude}&appid=$_apiKey&units=metric"),
-      );
+  Map<String, dynamic> _mapForecastToDaily(Map<String, dynamic> forecastData) {
+    // Basic aggregation to simulate daily
+    List<dynamic> list = forecastData['list'];
+    
+    // Extract next 24 (or 48) hours for "Hourly" / Premium timelines
+    // 3-hour intervals * 8 = 24 hours. Let's take 12 items (36 hours) to cover tomorrow morning easily.
+    List<dynamic> hourly = list.take(12).toList();
 
-      if (weatherResponse.statusCode == 200) {
-        final data = json.decode(weatherResponse.body);
-        
-        // Transform OWM data to app internal model
-        final currentTemp = (data['main']['temp'] as num?)?.toDouble() ?? 0.0;
-        final currentHumidity = (data['main']['humidity'] as num?)?.toDouble() ?? 0.0;
-        
-        String condition = "Unknown";
-        String description = "";
-        
-        if (data['weather'] != null && (data['weather'] as List).isNotEmpty) {
-           condition = data['weather'][0]['main']?.toString() ?? "Unknown";
-           description = data['weather'][0]['description']?.toString() ?? "";
-        }
-
-        final city = data['name']?.toString() ?? "Location";
-        final windSpeed = (data['wind'] != null) ? (data['wind']['speed'] as num?)?.toDouble() ?? 0.0 : 0.0;
-
-        // --- Calculate Insights Locally ---
-        const lang = 'en'; 
-        
-        OutcomeState? newWorkState;
-        OutcomeState? newFarmState;
-        Map<String, String> workCopy = {};
-        Map<String, String> farmCopy = {};
-
-        // Generate Primary Insight based on temp for now (can be expanded)
-        String insightTitle = "Safe Conditions";
-        String insightBody = "Weather is suitable for outdoor activities.";
-        String severity = "safe";
-
-        if (currentTemp > 35) {
-          insightTitle = "Heat Warning";
-          insightBody = "Extreme heat. Stay hydrated and avoid direct sun.";
-          severity = "high";
-        } else if (condition.toLowerCase().contains("rain")) {
-          insightTitle = "Rain Alert";
-          insightBody = "Rain detected. Carry an umbrella.";
-          severity = "medium";
-        }
-
-        if (profile.isPremium) {
-           // Reuse existing logic from WeatherInsightService if applicable
-           final workData = WeatherInsightService.getWorkSafetyStatus(currentTemp, currentHumidity, condition, lang);
-           newWorkState = workData['state'] as OutcomeState;
-           workCopy = WeatherInsightService.getNotificationCopy(profile.lastWorkState, newWorkState, UserMode.worker, lang);
-
-           final farmData = WeatherInsightService.getCropRiskData(currentTemp, condition, 0.0, lang); // Wind 0 for now
-           newFarmState = farmData['state'] as OutcomeState;
-           farmCopy = WeatherInsightService.getNotificationCopy(profile.lastFarmState, newFarmState, UserMode.farmer, lang);
-        }
-
-        // Generate Primary Insight Structure for UI
-        final adviceString = WeatherInsightService.getDailyAdvice(condition, currentTemp, currentHumidity, profile.mode, lang);
-        final adviceList = adviceString.split('. ').where((s) => s.isNotEmpty).toList();
-        
-        // Construct HomeInsights object
-        final internalData = {
-          "current_weather": {
-            "temperature": currentTemp,
-            "condition": condition,
-            "humidity": currentHumidity,
-            "wind": windSpeed,
-            "district": city,
-            "description": description
-          },
-          "primary_insight": {
-            "summary": insightTitle,
-            "bn_summary": insightTitle, // Placeholder translation
-            "actions": adviceList.isNotEmpty ? adviceList : [insightBody],
-            "bn_actions": adviceList.isNotEmpty ? adviceList : [insightBody], // Placeholder translation
-            "severity": severity,
-            "why_this_alert": {
-               "trigger": "Current weather conditions",
-               "bn_trigger": "বর্তমান আবহাওয়া পরিস্থিতি",
-               "who_is_affected": "Everyone",
-               "bn_who_is_affected": "সবাই",
-               "time_window": "Now"
-            }
-          },
-          "hourly_risk": [] 
-        };
-
-        _homeInsights = HomeInsights.fromJson(internalData);
-
-        // Update Profile logic
-        await profile.updateStates(
-          workState: newWorkState,
-          farmState: newFarmState,
-          title: profile.mode == UserMode.worker ? workCopy['title'] : farmCopy['title'],
-          body: profile.mode == UserMode.worker ? workCopy['body'] : farmCopy['body'],
-        );
-
-        // Save to cache
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setString('cached_home_insights', json.encode(internalData));
-      }
-    } catch (e) {
-      debugPrint("Error fetching live weather: $e");
+    Map<String, List<dynamic>> grouped = {};
+    
+    for (var item in list) {
+      String date = item['dt_txt'].toString().split(' ')[0];
+      if (!grouped.containsKey(date)) grouped[date] = [];
+      grouped[date]!.add(item);
     }
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  Future<void> fetchAlerts(String district) async {
-    // OWM Free tier doesn't support alerts API, keeping empty or mock implementation for now
-    _alerts = [];
-    notifyListeners();
-  }
-
-  Future<void> fetchForecast(String district) async {
-    // For 7 day forecast, OWM OneCall is needed (paid/separate). 
-    // Standard callback for 5 day / 3 hour exists but requires more parsing.
-    // Keeping fallback for now to avoid breaking UI.
-    _setForecastFallback();
-    notifyListeners();
-  }
-
-  void _setForecastFallback() {
-    _forecast = {
-      'hourly': [
-        {"time": "Now", "temp": "32°C", "cond": "Sunny", "bn_time": "এখন", "bn_cond": "রৌদ্রোজ্জ্বল"},
-        {"time": "2 PM", "temp": "34°C", "cond": "Partly Cloudy", "bn_time": "দুপুর ২টা", "bn_cond": "আংশিক মেঘলা"},
-        {"time": "5 PM", "temp": "30°C", "cond": "Cloudy", "bn_time": "বিকেল ৫টা", "bn_cond": "মেঘলা"},
-        {"time": "8 PM", "temp": "28°C", "cond": "Rain", "bn_time": "রাত ৮টা", "bn_cond": "বৃষ্টি"},
-        {"time": "11 PM", "temp": "26°C", "cond": "Clear", "bn_time": "রাত ১১টা", "bn_cond": "পরিষ্কার"},
-      ],
-      'comparison': {
-        "comparisonText": "No historical data",
-        "bn_comparisonText": "কোনো ঐতিহাসিক তথ্য নেই",
-        "trend": "neutral"
-      },
-      'confidence': {
-        "level": "N/A",
-        "bnLevel": "প্রযোজ্য নয়",
-        "text": "Requires Premium API",
-        "bn_text": "প্রিমিয়াম API প্রয়োজন",
-      },
-      'weekly_brief': {
-        "text": "Live forecast coming soon.",
-        "bn_text": "লাইভ পূর্বাভাস শীঘ্রই আসছে।"
+    
+    List<Map<String, dynamic>> daily = [];
+    grouped.forEach((date, items) {
+      double maxTemp = -100;
+      double minTemp = 100;
+      String icon = items[0]['weather'][0]['icon'];
+      String main = items[0]['weather'][0]['main'];
+      
+      for (var item in items) {
+        double temp = (item['main']['temp'] as num).toDouble();
+        if (temp > maxTemp) maxTemp = temp;
+        if (temp < minTemp) minTemp = temp;
       }
+      
+      daily.add({
+        "dt": items[0]['dt'],
+        "temp": {"min": minTemp, "max": maxTemp},
+        "weather": [{"main": main, "icon": icon}]
+      });
+    });
+    
+    return {
+      "daily": daily,
+      "hourly": hourly
     };
   }
 }

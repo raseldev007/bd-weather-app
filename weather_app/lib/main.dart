@@ -4,8 +4,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'services/profile_service.dart';
 import 'services/settings_service.dart';
 import 'services/news_service.dart';
-import 'services/weather_service.dart';
+import 'services/weather_service.dart'; // Keep if used elsewhere, or remove if not needed directly
+import 'providers/weather_provider.dart';
 import 'services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'premium/smart_guidance_provider.dart';
 
 import 'auth_gate.dart';
 import 'splash_screen.dart';
@@ -26,6 +29,24 @@ void main() async {
     print("⚠️ IGNORED FOR DEMO: Missing google-services.json?");
   }
   
+  final prefs = await SharedPreferences.getInstance();
+  
+  // Clean up legacy specialized mode preferences
+  final legacyKeys = [
+    'userMode', 
+    'profile_id', 
+    'routine_worker', 
+    'routine_farmer', 
+    'routine_student',
+    'farmState',
+    'selectedCrop'
+  ];
+  for (final key in legacyKeys) {
+    if (prefs.containsKey(key)) {
+      await prefs.remove(key);
+    }
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -33,7 +54,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ProfileService()),
         ChangeNotifierProvider(create: (_) => SettingsService()),
         ChangeNotifierProvider(create: (_) => NewsService()),
-        ChangeNotifierProvider(create: (_) => WeatherService()),
+        ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => SmartGuidanceProvider(prefs)),
       ],
       child: const MyApp(),
     ),

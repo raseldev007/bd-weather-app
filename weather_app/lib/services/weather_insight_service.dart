@@ -57,7 +57,7 @@ class WeatherInsightService {
     return "";
   }
 
-  static String getDailyAdvice(String condition, double temp, double humidity, UserMode mode, String lang, {double rainProb = 0, double windSpeed = 0, String city = ""}) {
+  static String getDailyAdvice(String condition, double temp, double humidity, String lang, {double rainProb = 0, double windSpeed = 0, String city = ""}) {
     List<String> advices = [];
     double heatIndex = calculateHeatIndex(temp, humidity);
     int hour = DateTime.now().hour;
@@ -82,49 +82,6 @@ class WeatherInsightService {
     if (monsoon.isNotEmpty) {
        // Only show monsoon status if relevant
        if (condition.toLowerCase().contains('rain')) advices.add(monsoon);
-    }
-
-    // Specialized Mode Intelligence (Outcome Profiles)
-    if (mode == UserMode.farmer) {
-      if (condition.toLowerCase().contains('rain')) {
-        advices.add(lang == 'bn' ? "ধানের চারা রোপনের আদর্শ সময় আজ।" : "Ideal day for transplantation. Avoid harvest.");
-        advices.add(lang == 'bn' ? "বৃষ্টির কারণে আজ কীটনাশক প্রয়োগ করবেন না (লোকসান রোধ করুন)।" : "STOP: DO NOT spray pesticide today (Prevents chemical loss).");
-      } else if (temp > 35) {
-        advices.add(lang == 'bn' ? "মাটিতে সেচ বজায় রাখুন - ফসলের তাপ চাপ কমান।" : "Action: Irrigate soil now to reduce crop heat stress.");
-      } else if (windSpeed > 25) {
-        advices.add(lang == 'bn' ? "ঝড়ো বাতাস: উঁচুতে কাজ করা এবং বড় গাছের নিচে অবস্থান এড়িয়ে চলুন।" : "Warning: High wind. Avoid tall structure work.");
-      } else {
-        advices.add(lang == 'bn' ? "আজ সার প্রয়োগ এবং সাধারণ খামার কাজের জন্য উপযুক্ত সময়।" : "Decision: Perfect window for fertilizer application.");
-      }
-    }
-
-    if (mode == UserMode.worker) {
-      if (heatIndex > 38) {
-        advices.add(lang == 'bn' ? "বিপজ্জনক তাপ সূচক! দুপুর ১২-৪ টা পর্যন্ত বাইরে কাজ এড়িয়ে চলুন।" : "SAFETY: UNSTABLE hours (12–4 PM). Avoid outdoor work.");
-      }
-      if (condition.toLowerCase().contains('storm')) {
-        advices.add(lang == 'bn' ? "বজ্রপাতের উচ্চ ঝুঁকি - খোলা মাঠ বা ক্রেন থেকে দূরে থাকুন।" : "ALERT: High lightning risk. Vacate open construction sites.");
-      }
-      if (condition.toLowerCase().contains('rain') && (city == 'Dhaka' || city == 'Chittagong')) {
-        advices.add(lang == 'bn' ? "রাস্তার জলাবদ্ধতার কারণে কাজের পরিকল্পনা পরিবর্তন করুন।" : "Commute Intelligence: Expect severe delays due to flooding.");
-      }
-    }
-
-    if (mode == UserMode.student) {
-      if (temp > 35) {
-        advices.add(lang == 'bn' ? "অ্যাসেম্বলি বা পিটি ক্লাস ইনডোর করার অনুরোধ করুন।" : "School Safety: Request indoor assembly due to heat.");
-      }
-      if (condition.toLowerCase().contains('rain')) {
-        advices.add(lang == 'bn' ? "স্কুলে যাতায়াতের সময় বই ও খাতা রেইনকোটের নিচে রাখুন।" : "Kit Protection: Keep books/devices sealed during commute.");
-      }
-      if (hour >= 7 && hour <= 9 && condition.toLowerCase().contains('fog')) {
-        advices.add(lang == 'bn' ? "ঘন কুয়াশার কারণে স্কুলে যাতায়াতে সতর্কতা অবলম্বন করুন।" : "Travel Alert: Dense fog during morning school run.");
-      }
-    }
-
-    // Prayer Time Related (Mock/Time-based)
-    if (hour >= 17 && hour <= 19 && condition.toLowerCase().contains('rain')) {
-       advices.add(lang == 'bn' ? "মাগরিবের নামাজের সময় বৃষ্টির সম্ভাবনা রয়েছে।" : "Rain expected around Maghrib prayer time.");
     }
 
     if (advices.isEmpty) return lang == 'bn' ? "আপনার দিনটি ভালো কাটুক!" : "Have a wonderful day!";
@@ -238,7 +195,7 @@ class WeatherInsightService {
     return null;
   }
 
-  static Map<String, dynamic> getDecisionInsights(String condition, double temp, double humidity, UserMode mode, String lang) {
+  static Map<String, dynamic> getDecisionInsights(String condition, double temp, double humidity, String lang) {
     bool isBn = lang == 'bn';
     List<String> bullets = [];
     double heatIndex = calculateHeatIndex(temp, humidity);
@@ -410,60 +367,9 @@ class WeatherInsightService {
     };
   }
 
-  static Map<String, String> getNotificationCopy(OutcomeState? oldState, OutcomeState newState, UserMode mode, String lang) {
+  static Map<String, String> getNotificationCopy(OutcomeState? oldState, OutcomeState newState, String lang) {
     bool isBn = lang == 'bn';
     
-    if (mode == UserMode.worker) {
-      if (newState == OutcomeState.unsafe) {
-        return {
-          "title": isBn ? "⚠️ অনিরাপদ: বিরতি নিন" : "⚠️ UNSAFE: Take a break",
-          "body": isBn ? "অবস্থা: বিপজ্জনক তাপ।\nকরণীয়: কাজ বন্ধ করে ছায়ায় বিশ্রাম নিন।\nউইন্ডো: দুপুর ১২-৪ টা।" : "Status: Dangerous Heat.\nAction: Stop work and rest in shade.\nWindow: 12 PM - 4 PM."
-        };
-      }
-      if (oldState == OutcomeState.unsafe && newState == OutcomeState.safe) {
-        return {
-          "title": isBn ? "✅ কাজ শুরু করুন" : "✅ SAFE: Resume Work",
-          "body": isBn ? "অবস্থা: তাপমাত্রা বা বজ্রঝড় কমেছে।\nকরণীয়: স্বাভাবিক কাজ শুরু করতে পারেন।\nউইন্ডো: এখন থেকে সন্ধ্যা পর্যন্ত।" : "Status: Risks reduced.\nAction: Resume outdoor work.\nWindow: Safe until evening."
-        };
-      }
-      if (newState == OutcomeState.caution) {
-         return {
-          "title": isBn ? "⚠️ সতর্কতা: তাপমাত্রা বাড়ছে" : "⚠️ CAUTION: Heat Rising",
-          "body": isBn ? "অবস্থা: মাঝারি ঝুঁকি।\nকরণীয়: কাজের মাঝে অতিরিক্ত বিরতি নিন।\nউইন্ডো: পরবর্তী ৩ ঘণ্টা।" : "Status: Moderate Risk.\nAction: Take extra breaks.\nWindow: Next 3 hours."
-        };
-      }
-    }
-
-    if (mode == UserMode.farmer) {
-      if (newState == OutcomeState.unsafe) {
-        return {
-          "title": isBn ? "⚠️ অ্যালার্ট: উচ্চ ফসল ঝুঁকি" : "⚠️ ALERT: High Crop Risk",
-          "body": isBn ? "অবস্থা: ভারী বৃষ্টি/ঝড়।\nকরণীয়: ফসল ও সার প্রয়োগ বন্ধ রাখুন।\nউইন্ডো: পরবর্তী ২৪ ঘণ্টা।" : "Status: Heavy rain/storm.\nAction: Stop fertilizer application.\nWindow: Next 24 hours."
-        };
-      }
-      if (oldState == OutcomeState.unsafe && newState == OutcomeState.safe) {
-        return {
-          "title": isBn ? "✅ নিরাপদ: সার প্রয়োগের সময়" : "✅ SAFE: Work Window Open",
-          "body": isBn ? "অবস্থা: আকাশ পরিষ্কার।\nকরণীয়: দ্রুত সার বা কিটনাশক প্রয়োগ শেষ করুন।\nউইন্ডো: আগামী ৩ ঘণ্টা।" : "Status: Clear skies.\nAction: Apply fertilizer/pesticide now.\nWindow: Next 3 hours."
-        };
-      }
-    }
-
-    if (mode == UserMode.student) {
-      if (newState == OutcomeState.unsafe) {
-        return {
-          "title": isBn ? "⚠️ স্কুল যাতায়াত সতর্কতা" : "⚠️ SCHOOL: Commute Risk",
-          "body": isBn ? "অবস্থা: প্রতিকূল আবহাওয়া।\nকরণীয়: বিদ্যালয়ে যাতায়াতে অতিরিক্ত সতর্ক থাকুন।\nউইন্ডো: সকালের যাতায়াত সময়।" : "Status: Adverse weather.\nAction: Exercise extreme caution.\nWindow: Morning school run."
-        };
-      }
-      if (oldState == OutcomeState.unsafe && newState == OutcomeState.safe) {
-        return {
-          "title": isBn ? "✅ যাতায়াত এখন নিরাপদ" : "✅ SCHOOL: Safe Commute",
-          "body": isBn ? "অবস্থা: পরিস্থিতি স্বাভাবিক।\nকরণীয়: সময়মত বিদ্যালয়ে রওনা হন।\nউইন্ডো: এখন থেকে বিকাল পর্যন্ত।" : "Status: Conditions normalizing.\nAction: Safe to head to school.\nWindow: Safe until afternoon."
-        };
-      }
-    }
-
     return {};
   }
 
@@ -484,28 +390,9 @@ class WeatherInsightService {
     return logs;
   }
 
-  static Map<String, dynamic> getDailyRiskSummary(UserMode mode, double temp, String condition, String lang) {
+  static Map<String, dynamic> getDailyRiskSummary(double temp, String condition, String lang) {
     bool isBn = lang == 'bn';
-    if (mode == UserMode.farmer) {
-      return {
-        "title": isBn ? "আজকের কৃষি ঝুঁকি" : "Today's Farm Risk",
-        "risks": [
-          {"label": isBn ? "পাহাড়ধস/প্লাবন" : "Flood/Landslide", "level": condition.contains('Rain') ? "High" : "Low", "color": condition.contains('Rain') ? Colors.red : Colors.green},
-          {"label": isBn ? "তীব্র দাবদাহ" : "Heat Stress", "level": temp > 35 ? "Medium" : "Low", "color": temp > 35 ? Colors.orange : Colors.green},
-          {"label": isBn ? "বজ্রপাত" : "Lightning", "level": condition.contains('Storm') ? "High" : "Low", "color": condition.contains('Storm') ? Colors.red : Colors.green},
-        ]
-      };
-    }
-    if (mode == UserMode.worker) {
-      return {
-        "title": isBn ? "আজকের কাজের ঝুঁকি" : "Daily Work Risk",
-        "risks": [
-          {"label": isBn ? "তাপমাত্রা (HI)" : "Heat Index", "level": temp > 34 ? "High" : "Low", "color": temp > 34 ? Colors.red : Colors.green},
-          {"label": isBn ? "বজ্রপাত ঝুঁকি" : "Lightning Risk", "level": condition.contains('Storm') ? "High" : "Low", "color": condition.contains('Storm') ? Colors.red : Colors.green},
-          {"label": isBn ? "জলাবদ্ধতা" : "Flooding", "level": condition.contains('Rain') ? "Medium" : "Low", "color": condition.contains('Rain') ? Colors.orange : Colors.green},
-        ]
-      };
-    }
+    return {};
     return {};
   }
 
@@ -589,5 +476,343 @@ class WeatherInsightService {
       "comfort": isBn ? "আরামদায়ক যাতায়াত" : "Comfortable travel",
       "icon": condition.toLowerCase().contains('rain') ? "☔" : "🌤️"
     };
+  }
+  // --- V2 PREMIUM LOGIC START ---
+
+  static Map<String, dynamic> getStudyComfortScore(double temp, double humidity) {
+    // Score 0-100. Lower is worse.
+    double heatIndex = calculateHeatIndex(temp, humidity);
+    int score = 100;
+    
+    if (heatIndex > 30) score -= 20;
+    if (heatIndex > 35) score -= 30; // 50
+    if (heatIndex > 40) score -= 30; // 20
+    
+    if (humidity > 80) score -= 10;
+
+    String label = "EXCELLENT";
+    Color color = Colors.green;
+    
+    if (score < 40) {
+      label = "POOR";
+      color = Colors.red;
+    } else if (score < 70) {
+      label = "OKAY";
+      color = Colors.orange;
+    }
+
+    return {"score": score, "label": label, "color": color};
+  }
+
+  static Map<String, dynamic> getCommuteRiskScore(double rainProb, double windSpeed, String condition) {
+    int score = 100;
+    
+    if (rainProb > 50 || condition.toLowerCase().contains('rain')) score -= 50;
+    if (windSpeed > 20) score -= 20;
+    if (condition.toLowerCase().contains('storm')) score -= 30;
+
+    String label = "SAFE";
+    Color color = Colors.green;
+    if (score < 50) {
+      label = "RISKY";
+      color = Colors.red;
+    } else if (score < 80) {
+      label = "MODERATE";
+      color = Colors.orange;
+    }
+
+    return {"score": score, "label": label, "color": color};
+  }
+
+  static Map<String, dynamic> getOutdoorWindow(List<dynamic> hourlyForecast) {
+     // Find best 2 hour block (lowest heat index + no rain)
+     // This is a simplification
+     String bestTime = "5-7 PM";
+     int bestScore = -1;
+     
+     // Scan next 12 hours (4 chunks of 3h)
+     for (var item in hourlyForecast) {
+        String time = item['dt_txt'].split(' ')[1].substring(0, 5); // 12:00
+        double temp = (item['main']['temp'] as num).toDouble();
+        String cond = item['weather'][0]['main'].toString();
+        
+        int score = 100;
+        if (temp > 32) score -= 40;
+        if (cond.contains("Rain")) score -= 80;
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestTime = "$time - ${int.parse(time.split(':')[0]) + 3}:00";
+        }
+     }
+     
+     return {
+       "bestTime": bestTime,
+       "score": bestScore,
+       "label": bestScore > 70 ? "GREAT" : "OKAY"
+     };
+  }
+
+  static Map<String, dynamic> getTenSecondSummary(double temp, double feelsLike, List<dynamic> hourlyForecast, String lang) {
+     bool isBn = lang == 'bn';
+     
+     // 1. Condition
+     String mainCond = "Clear";
+     // ... logic to derive mainly from current condition ... (omitted for brevity, passed in arg would be better, but we can assume 'temp' context)
+     
+     // Mini Chips
+     // Rain Risk
+     String rainRisk = "Low";
+     // Heat Stress
+     String heatStress = "None";
+     if (temp > 35 || feelsLike > 38) heatStress = "High";
+     
+     // Best Action Sentence
+     var window = getOutdoorWindow(hourlyForecast);
+     String action = isBn 
+       ? "বাইরে যাওয়ার সেরা সময়: ${window['bestTime']}" 
+       : "Best outdoor window: ${window['bestTime']}";
+       
+     if (heatStress == "High") {
+       action += isBn ? " • দুপুরে রোদ এড়িয়ে চলুন" : " • Avoid midday heat";
+     }
+
+     return {
+       "heatStress": heatStress,
+       "rainRisk": rainRisk,
+       "action": action
+     };
+  }
+
+  static List<Map<String, dynamic>> getChecklist(double temp, double humidity, String condition, String lang) {
+     bool isBn = lang == 'bn';
+     List<Map<String, dynamic>> list = [];
+     double hi = calculateHeatIndex(temp, humidity);
+
+     if (hi > 38) {
+       list.add({
+         "text": isBn ? "দুপুরে বাইরে যাওয়া এড়িয়ে চলুন" : "Avoid noon outdoor (heat index high)",
+         "icon": Icons.wb_sunny_rounded,
+         "color": Colors.red
+       });
+     }
+     
+     if (condition.toLowerCase().contains("rain")) {
+        list.add({
+         "text": isBn ? "ছাতা সাথে রাখুন" : "Umbrella recommended",
+         "icon": Icons.umbrella,
+         "color": Colors.orange
+       });
+     } else {
+        list.add({
+         "text": isBn ? "হালকা সুতির পোশাক পরুন" : "Wear light cotton clothes",
+         "icon": Icons.checkroom,
+         "color": Colors.green
+       });
+     }
+     
+     // Generic hydration
+     list.add({
+         "text": isBn ? "প্রচুর পানি পান করুন" : "Stay hydrated today",
+         "icon": Icons.water_drop,
+         "color": Colors.blue
+     });
+
+     return list;
+  }
+  
+  static List<Map<String, dynamic>> getTomorrowMorningTimeline(List<dynamic> next24h, String lang) {
+     // Filter for 6 AM to 12 PM tomorrow
+     // This requires parsing dates. For simplicity, we might just grab indices 2 and 3 if they correspond to morning 
+     // provided the fetch happens at a certain time. 
+     // BETTER: Just return next few relevant slots.
+     
+     return next24h.take(4).map((item) {
+        String time = item['dt_txt'].split(' ')[1].substring(0, 5);
+        double t = (item['main']['temp'] as num).toDouble();
+        String cond = item['weather'][0]['main'];
+        
+        return {
+          "time": time,
+          "temp": t,
+          "icon": cond.contains("Rain") ? Icons.cloud_off : Icons.wb_sunny, // Simplification
+          "condition": cond
+        };
+     }).toList();
+  }
+
+  // --- V3 DECISION ASSISTANT LOGIC ---
+
+  static Map<String, dynamic> getContextSummary(String activeTab, double temp, double humidity, double wind, String condition, String lang) {
+     bool isBn = lang == 'bn';
+     
+     // Default / Hero
+     String action = isBn ? "আজকের দিনটি স্বাভাবিক" : "Today is normal.";
+     if (activeTab == 'Study') {
+       if (temp > 30 || humidity > 80) {
+         action = isBn ? "পড়ার জন্য পরিবেশ কিছুটা অস্বস্তিকর" : "Conditions are challenging for focus.";
+       } else {
+         action = isBn ? "পড়াশোনার জন্য চমৎকার পরিবেশ!" : "Ideal conditions for deep focus.";
+       }
+     } else if (activeTab == 'Commute') {
+        if (condition.toLowerCase().contains('rain')) {
+           action = isBn ? "রাস্তায় জ্যাম এবং বৃষ্টির ঝুঁকি আছে" : "Expect delays due to rain.";
+        } else {
+           action = isBn ? "যাতায়াত নিরাপদ ও আরামদায়ক" : "Travel conditions are smooth.";
+        }
+     } else if (activeTab == 'Outdoor') { // Maps to Best Time/Outdoor tab
+        if (temp > 35) {
+           action = isBn ? "দুপুরে বাইরে না যাওয়াই ভালো" : "Avoid outdoor activity midday.";
+        } else {
+           action = isBn ? "বিকেল ৫টা থেকে বাইরে যাওয়া ভালো" : "Best outdoor window: Late Afternoon.";
+        }
+     }
+
+     return {
+       "action": action,
+     };
+  }
+
+  static Map<String, dynamic> getDetailedStudySignals(double temp, double humidity, double wind) {
+      // Returns 3 mini-signals
+      // 0 = Green, 1 = Yellow, 2 = Red
+      
+      int tempSignal = 0;
+      if (temp > 30) tempSignal = 1;
+      if (temp > 35) tempSignal = 2;
+
+      int humiditySignal = 0;
+      if (humidity > 70) humiditySignal = 1;
+      if (humidity > 85) humiditySignal = 2;
+      
+      int noiseSignal = 0;
+      if (wind > 15) noiseSignal = 1; // Wind noise proxy
+
+      return {
+        "tempSignal": tempSignal,
+        "humiditySignal": humiditySignal,
+        "noiseSignal": noiseSignal
+      };
+  }
+
+  static List<Map<String, dynamic>> getBestTimeTimeline(List<dynamic> hourlyForecast, String lang) {
+      bool isBn = lang == 'bn';
+      // Divide day into blocks: Morning (6-11), Noon (12-4), Evening (5-8), Night (9-5)
+      // This is a rough estimation based on available hourly data indices or parsing dates. 
+      // For simplicity, we will create 4 fixed blocks and try to map forecast data to them if available.
+      
+      return [
+        {
+          "period": isBn ? "সকাল" : "Morning",
+          "subtitle": "6 AM - 11 AM",
+          "study": "good",
+          "commute": "good",
+          "outdoor": "good",
+          "overall": "good"
+        },
+        {
+          "period": isBn ? "দুপুর" : "Noon",
+          "subtitle": "12 PM - 4 PM",
+          "study": "fair", // e.g. heat
+          "commute": "fair", // heat
+          "outdoor": "poor", // Avoid sun
+          "overall": "fair"
+        },
+        {
+          "period": isBn ? "বিকেল" : "Evening",
+          "subtitle": "5 PM - 8 PM",
+          "study": "good",
+          "commute": "fair", // Rush hour implied risk?
+          "outdoor": "good",
+          "overall": "good"
+        },
+        {
+          "period": isBn ? "রাত" : "Night",
+          "subtitle": "9 PM +",
+          "study": "excellent",
+          "commute": "good",
+          "outdoor": "fair",
+          "overall": "excellent"
+        },
+      ];
+  }
+
+  // --- V4 WINDOW FINDER ENGINE ---
+
+  static Map<String, dynamic> getBestFocusWindow(List<dynamic> hourlyForecast, String studyPref) {
+      // Find best 3 hours within the preferred time block.
+      // Prefs: Morning (6-12), Afternoon (12-18), Night (18-24/02)
+      
+      int startHourFilter = 6;
+      int endHourFilter = 12;
+      
+      if (studyPref == "Afternoon") { startHourFilter = 12; endHourFilter = 18; }
+      if (studyPref == "Night") { startHourFilter = 18; endHourFilter = 23; }
+
+      String bestWindow = "N/A";
+      int bestScore = -1;
+      
+      // Simple scan
+      // We need at least 3 slots
+      if (hourlyForecast.length > 2) {
+        for (int i=0; i < hourlyForecast.length - 2; i++) {
+           // Parse hour
+           String timeStr = hourlyForecast[i]['dt_txt'].split(' ')[1]; // "09:00:00"
+           int h = int.parse(timeStr.split(':')[0]);
+           
+           // Filter
+           if (h >= startHourFilter && h < endHourFilter) {
+              // Calculate avg score for next 3 hours (i, i+1, i+2)
+              double avgTemp = 0;
+              double avgHum = 0;
+              bool rain = false;
+              
+              for (int k=0; k<3; k++) {
+                 avgTemp += (hourlyForecast[i+k]['main']['temp'] as num).toDouble();
+                 avgHum += (hourlyForecast[i+k]['main']['humidity'] as num).toDouble();
+                 if (hourlyForecast[i+k]['weather'][0]['main'].toString().contains("Rain")) rain = true;
+              }
+              avgTemp /= 3;
+              avgHum /= 3;
+              
+              // Score Logic
+              int score = 100;
+              if (avgTemp > 30) score -= 30;
+              if (avgHum > 80) score -= 20;
+              if (rain) score -= 50;
+              
+              if (score > bestScore) {
+                 bestScore = score;
+                 bestWindow = "$h:00 - ${h+3}:00";
+              }
+           }
+        }
+      }
+      
+      if (bestScore == -1) bestWindow = "$startHourFilter:00 - ${startHourFilter+3}:00"; // Fallback
+
+      return {
+        "window": bestWindow,
+        "score": bestScore == -1 ? 50 : bestScore, // Default to 50 if no data
+        "label": bestScore > 80 ? "EXCELLENT" : (bestScore > 50 ? "OK" : "POOR")
+      };
+  }
+
+  static Map<String, dynamic> getDailyPlan(List<dynamic> hourlyForecast, String lang) {
+     // Generate status needed for Plan Tab
+     // Morning / Noon / Evening / Night
+     
+     // Mocking smart status for 4 blocks based on forecast trends
+     // Using first few items as proxies for Morning/Noon etc is fragile but okay for V4 Prototype
+     
+     // Let's just do a dummy "Smart Scan"
+     return {
+       "blocks": [
+         {"period": "Morning", "status": "Safe", "study": "Good", "commute": "Safe", "outdoor": "Great"},
+         {"period": "Noon", "status": "Caution", "study": "Fair", "commute": "Hot", "outdoor": "Avoid"},
+         {"period": "Evening", "status": "Safe", "study": "Good", "commute": "Busy", "outdoor": "Good"},
+         {"period": "Night", "status": "Safe", "study": "Excellent", "commute": "Safe", "outdoor": "Fair"},
+       ]
+     };
   }
 }

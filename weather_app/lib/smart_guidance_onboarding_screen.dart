@@ -8,11 +8,8 @@ class SmartGuidanceOnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profile = Provider.of<ProfileService>(context, listen: false);
-    final mode = profile.mode;
-    
-    // Mode-specific content
-    final modeContent = _getModeContent(mode);
+    // General content
+    final modeContent = _getModeContent();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -127,12 +124,12 @@ class SmartGuidanceOnboardingScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 60,
                     child: ElevatedButton(
-                      onPressed: () {
-                        profile.setPremium(true);
+                        onPressed: () {
+                        context.read<ProfileService>().setPremium(true);
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("${modeContent['modeName']} Activated!"),
+                            content: const Text("Premium Activated!"),
                             backgroundColor: Colors.teal.shade700,
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -172,49 +169,16 @@ class SmartGuidanceOnboardingScreen extends StatelessWidget {
     );
   }
 
-  Map<String, String> _getModeContent(UserMode mode) {
-    switch (mode) {
-      case UserMode.worker:
-        return {
-          'modeName': 'Work Safety Assist',
-          'icon1': '🛡',
-          'benefit1': 'Avoid unsafe work hours',
-          'icon2': '⚡',
-          'benefit2': 'Know when heat becomes dangerous',
-          'icon3': '💰',
-          'benefit3': 'Protect your earnings & health',
-        };
-      case UserMode.farmer:
-        return {
-          'modeName': 'Crop & Work Planner',
-          'icon1': '🌾',
-          'benefit1': 'Protect crops & plan work',
-          'icon2': '⏰',
-          'benefit2': 'Get safe spraying windows',
-          'icon3': '💧',
-          'benefit3': 'Prevent fertilizer loss from rain',
-        };
-      case UserMode.student:
-        return {
-          'modeName': 'Study & Commute Assist',
-          'icon1': '🎓',
-          'benefit1': 'Study and commute smarter',
-          'icon2': '🚶',
-          'benefit2': 'Safe travel to school & tuition',
-          'icon3': '📚',
-          'benefit3': 'Know best study times',
-        };
-      case UserMode.general:
-        return {
-          'modeName': 'Daily Planner',
-          'icon1': '🌤️',
-          'benefit1': 'Plan your day with confidence',
-          'icon2': '⏰',
-          'benefit2': 'Know risky hours in advance',
-          'icon3': '✅',
-          'benefit3': 'Get clear action advice',
-        };
-    }
+  Map<String, String> _getModeContent() {
+    return {
+      'modeName': 'Daily Planner',
+      'icon1': '🌤️',
+      'benefit1': 'Plan your day with confidence',
+      'icon2': '⏰',
+      'benefit2': 'Know risky hours in advance',
+      'icon3': '✅',
+      'benefit3': 'Get clear action advice',
+    };
   }
 
   Widget _buildBenefitItem(String emoji, String text, Color color) {

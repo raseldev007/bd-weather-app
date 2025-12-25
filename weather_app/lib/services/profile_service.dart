@@ -2,41 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'weather_insight_service.dart';
 
-enum UserMode { general, farmer, worker, student }
+
 
 class ProfileService extends ChangeNotifier {
   String _name = "User";
   String _email = "user@example.com";
   String _location = "Dhaka, Bangladesh";
   String _profileImageUrl = ""; // Empty means show default icon
-  UserMode _mode = UserMode.general;
+
   bool _isLoggedIn = false;
   bool _isPremium = false;
   OutcomeState? _lastWorkState;
-  OutcomeState? _lastFarmState;
+
   DateTime? _lastTransitionTime;
   String? _lastTransitionTitle;
   String? _lastTransitionBody;
   bool _dailySummaryEnabled = false;
   DateTime? _lastDailySummaryTime;
-  String _selectedCrop = "General Crops";
+
   int _impactScore = 0;
 
   String get name => _name;
   String get email => _email;
   String get location => _location;
   String get profileImageUrl => _profileImageUrl;
-  UserMode get mode => _mode;
+
   bool get isLoggedIn => _isLoggedIn;
   bool get isPremium => _isPremium;
   OutcomeState? get lastWorkState => _lastWorkState;
-  OutcomeState? get lastFarmState => _lastFarmState;
+
   DateTime? get lastTransitionTime => _lastTransitionTime;
   String? get lastTransitionTitle => _lastTransitionTitle;
   String? get lastTransitionBody => _lastTransitionBody;
   bool get dailySummaryEnabled => _dailySummaryEnabled;
   DateTime? get lastDailySummaryTime => _lastDailySummaryTime;
-  String get selectedCrop => _selectedCrop;
+
   int get impactScore => _impactScore;
 
   ProfileService() {
@@ -49,13 +49,12 @@ class ProfileService extends ChangeNotifier {
     _email = prefs.getString('email') ?? "user@example.com";
     _location = prefs.getString('location') ?? "Dhaka, Bangladesh";
     _profileImageUrl = prefs.getString('profileImageUrl') ?? "";
-    final modeIndex = prefs.getInt('userMode') ?? 0;
-    _mode = UserMode.values[modeIndex];
+
     _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     _isPremium = prefs.getBool('isPremium') ?? false;
     _impactScore = prefs.getInt('impactScore') ?? 0;
     _dailySummaryEnabled = prefs.getBool('dailySummaryEnabled') ?? false;
-    _selectedCrop = prefs.getString('selectedCrop') ?? "General Crops";
+
     
     String? lastSummary = prefs.getString('lastDailySummaryTime');
     if (lastSummary != null) _lastDailySummaryTime = DateTime.parse(lastSummary);
@@ -68,13 +67,7 @@ class ProfileService extends ChangeNotifier {
       );
     }
     
-    String? farmStateStr = prefs.getString('lastFarmState');
-    if (farmStateStr != null) {
-      _lastFarmState = OutcomeState.values.firstWhere(
-        (e) => e.toString() == farmStateStr,
-        orElse: () => OutcomeState.safe,
-      );
-    }
+
 
     notifyListeners();
   }
@@ -106,12 +99,7 @@ class ProfileService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateMode(UserMode mode) async {
-    _mode = mode;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('userMode', mode.index);
-    notifyListeners();
-  }
+
 
   Future<void> setPremium(bool value) async {
     _isPremium = value;
@@ -135,19 +123,13 @@ class ProfileService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateStates({OutcomeState? workState, OutcomeState? farmState, String? title, String? body}) async {
+  Future<void> updateStates({OutcomeState? workState, String? title, String? body}) async {
     final prefs = await SharedPreferences.getInstance();
     bool changed = false;
 
     if (workState != null && workState != _lastWorkState) {
       _lastWorkState = workState;
       await prefs.setString('lastWorkState', workState.toString());
-      changed = true;
-    }
-
-    if (farmState != null && farmState != _lastFarmState) {
-      _lastFarmState = farmState;
-      await prefs.setString('lastFarmState', farmState.toString());
       changed = true;
     }
 
@@ -181,10 +163,27 @@ class ProfileService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateSelectedCrop(String crop) async {
-    _selectedCrop = crop;
+
+
+  // --- V4 DECISION PRODUCT PREFERENCES ---
+  String _studyTimePref = "Morning"; // Morning, Afternoon, Night
+  String _commuteModePref = "Bus"; // Walk, Rickshaw, Bike, Car, Bus
+
+  String get studyTimePref => _studyTimePref;
+  String get commuteModePref => _commuteModePref;
+
+  Future<void> _loadV4Prefs() async { // Call this in _loadProfile
+     final prefs = await SharedPreferences.getInstance();
+     _studyTimePref = prefs.getString('studyTimePref') ?? "Morning";
+     _commuteModePref = prefs.getString('commuteModePref') ?? "Bus";
+  }
+
+  Future<void> updatePremiumPreferences({required String studyTime, required String commuteMode}) async {
+    _studyTimePref = studyTime;
+    _commuteModePref = commuteMode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedCrop', crop);
+    await prefs.setString('studyTimePref', studyTime);
+    await prefs.setString('commuteModePref', commuteMode);
     notifyListeners();
   }
 }

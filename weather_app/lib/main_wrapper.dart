@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'weather_screen.dart';
-import 'forecast_screen.dart';
+import 'screens/forecast_7day_screen.dart';
 import 'alerts_screen.dart';
 import 'news_feed_screen.dart';
 import 'settings_screen.dart';
@@ -17,7 +17,7 @@ class _MainWrapperState extends State<MainWrapper> {
 
   final List<Widget> _screens = [
     const WeatherScreen(),
-    const ForecastScreen(),
+    const Forecast7DayScreen(),
     const AlertsScreen(),
     const NewsFeedScreen(),
     const SettingsScreen(),
