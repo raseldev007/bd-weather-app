@@ -97,11 +97,19 @@ class WeatherService extends ChangeNotifier {
         final data = json.decode(weatherResponse.body);
         
         // Transform OWM data to app internal model
-        final currentTemp = (data['main']['temp'] as num).toDouble();
-        final currentHumidity = (data['main']['humidity'] as num).toDouble();
-        final condition = data['weather'][0]['main'] as String;
-        final description = data['weather'][0]['description'] as String;
-        final city = data['name'];
+        final currentTemp = (data['main']['temp'] as num?)?.toDouble() ?? 0.0;
+        final currentHumidity = (data['main']['humidity'] as num?)?.toDouble() ?? 0.0;
+        
+        String condition = "Unknown";
+        String description = "";
+        
+        if (data['weather'] != null && (data['weather'] as List).isNotEmpty) {
+           condition = data['weather'][0]['main']?.toString() ?? "Unknown";
+           description = data['weather'][0]['description']?.toString() ?? "";
+        }
+
+        final city = data['name']?.toString() ?? "Location";
+        final windSpeed = (data['wind'] != null) ? (data['wind']['speed'] as num?)?.toDouble() ?? 0.0 : 0.0;
 
         // --- Calculate Insights Locally ---
         const lang = 'en'; 
@@ -143,7 +151,7 @@ class WeatherService extends ChangeNotifier {
             "temp": currentTemp,
             "condition": condition,
             "humidity": currentHumidity,
-            "wind": data['wind']['speed'],
+            "wind": windSpeed,
             "district": city,
             "description": description
           },
