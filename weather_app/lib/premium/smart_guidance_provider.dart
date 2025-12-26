@@ -10,7 +10,8 @@ class SmartGuidanceProvider extends ChangeNotifier {
 
   // Core
   bool _smartGuidanceEnabled = true;
-  OutcomeProfileId get _selectedProfileId => OutcomeProfileId.general;
+  OutcomeProfileId _selectedProfileId = OutcomeProfileId.general;
+  OutcomeProfileId get selectedProfileId => _selectedProfileId;
 
   // Per-profile routines
   GeneralRoutine _generalRoutine = const GeneralRoutine(commuteMode: CommuteMode.walk);
@@ -22,12 +23,16 @@ class SmartGuidanceProvider extends ChangeNotifier {
   // Checklist (per-profile) + daily reset
   String _checklistDayKey = _todayKey();
   final Map<String, Map<String, bool>> _checklistDoneByProfile = {
-    OutcomeProfileId.general.name: <String, bool>{}
+    OutcomeProfileId.general.name: <String, bool>{},
+    OutcomeProfileId.student.name: <String, bool>{},
+    OutcomeProfileId.worker.name: <String, bool>{},
   };
 
   // Alerts (per-profile pack toggles)
   final Map<String, Map<String, bool>> _alertTogglesByProfile = {
-    OutcomeProfileId.general.name: <String, bool>{}
+    OutcomeProfileId.general.name: <String, bool>{},
+    OutcomeProfileId.student.name: <String, bool>{},
+    OutcomeProfileId.worker.name: <String, bool>{},
   };
 
   SmartGuidanceProvider(this._prefs) {
@@ -40,7 +45,7 @@ class SmartGuidanceProvider extends ChangeNotifier {
   GuidanceResult? get guidance => _latestGuidance;
 
   RoutineBundle get routine => RoutineBundle(
-        profile: OutcomeProfileId.general,
+        profile: _selectedProfileId,
         general: _generalRoutine,
       );
 
@@ -62,6 +67,12 @@ class SmartGuidanceProvider extends ChangeNotifier {
   Future<void> toggleSmartGuidance(bool v) async {
     _smartGuidanceEnabled = v;
     await _prefs.setBool('smart_enabled', v);
+    notifyListeners();
+  }
+
+  Future<void> setProfileId(OutcomeProfileId id) async {
+    _selectedProfileId = id;
+    await _prefs.setString('premium_profile', id.name);
     notifyListeners();
   }
 
@@ -97,6 +108,8 @@ class SmartGuidanceProvider extends ChangeNotifier {
     if (savedDay != today) {
       // new day → wipe all profiles' checklist done state
       _checklistDoneByProfile[OutcomeProfileId.general.name] = <String, bool>{};
+      _checklistDoneByProfile[OutcomeProfileId.student.name] = <String, bool>{};
+      _checklistDoneByProfile[OutcomeProfileId.worker.name] = <String, bool>{};
       _prefs.setString('checklist_day', today);
       _prefs.setString('checklist_state', jsonEncode(_checklistDoneByProfile));
     }
@@ -121,7 +134,13 @@ class SmartGuidanceProvider extends ChangeNotifier {
   void _loadFromPrefs() {
     _smartGuidanceEnabled = _prefs.getBool('smart_enabled') ?? true;
 
-
+    final profileStr = _prefs.getString('premium_profile');
+    if (profileStr != null) {
+      _selectedProfileId = OutcomeProfileId.values.firstWhere(
+        (e) => e.name == profileStr,
+        orElse: () => OutcomeProfileId.general,
+      );
+    }
 
     // routines
     _generalRoutine = _generalFromJson(_tryDecode(_prefs.getString('routine_general')));
@@ -130,13 +149,21 @@ class SmartGuidanceProvider extends ChangeNotifier {
     _checklistDayKey = _prefs.getString('checklist_day') ?? _todayKey();
     final checklistJson = _tryDecode(_prefs.getString('checklist_state'));
     if (checklistJson != null && checklistJson is Map) {
-      _checklistDoneByProfile[OutcomeProfileId.general.name] = (checklistJson[OutcomeProfileId.general.name] as Map?)?.map((k, v) => MapEntry(k.toString(), v == true)) ?? {};
+      for (var p in OutcomeProfileId.values) {
+         if (checklistJson.containsKey(p.name)) {
+            _checklistDoneByProfile[p.name] = (checklistJson[p.name] as Map).map((k, v) => MapEntry(k.toString(), v == true));
+         }
+      }
     }
 
     // alert toggles
     final alertJson = _tryDecode(_prefs.getString('alert_toggles'));
     if (alertJson != null && alertJson is Map) {
-      _alertTogglesByProfile[OutcomeProfileId.general.name] = (alertJson[OutcomeProfileId.general.name] as Map?)?.map((k, v) => MapEntry(k.toString(), v == true)) ?? {};
+      for (var p in OutcomeProfileId.values) {
+        if (alertJson.containsKey(p.name)) {
+          _alertTogglesByProfile[p.name] = (alertJson[p.name] as Map).map((k, v) => MapEntry(k.toString(), v == true));
+        }
+      }
     }
   }
 

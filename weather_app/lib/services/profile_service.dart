@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'weather_insight_service.dart';
+import '../premium/models/guidance_models.dart';
 
 
 
@@ -12,6 +13,7 @@ class ProfileService extends ChangeNotifier {
 
   bool _isLoggedIn = false;
   bool _isPremium = false;
+  OutcomeProfileId _chosenProfileId = OutcomeProfileId.general;
   OutcomeState? _lastWorkState;
 
   DateTime? _lastTransitionTime;
@@ -29,6 +31,7 @@ class ProfileService extends ChangeNotifier {
 
   bool get isLoggedIn => _isLoggedIn;
   bool get isPremium => _isPremium;
+  OutcomeProfileId get chosenProfileId => _chosenProfileId;
   OutcomeState? get lastWorkState => _lastWorkState;
 
   DateTime? get lastTransitionTime => _lastTransitionTime;
@@ -66,9 +69,16 @@ class ProfileService extends ChangeNotifier {
         orElse: () => OutcomeState.safe,
       );
     }
+
+    String? profileStr = prefs.getString('chosenProfileId');
+    if (profileStr != null) {
+      _chosenProfileId = OutcomeProfileId.values.firstWhere(
+        (e) => e.toString() == profileStr,
+        orElse: () => OutcomeProfileId.general,
+      );
+    }
     
-
-
+    await _loadV4Prefs();
     notifyListeners();
   }
 
@@ -105,6 +115,13 @@ class ProfileService extends ChangeNotifier {
     _isPremium = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isPremium', value);
+    notifyListeners();
+  }
+
+  Future<void> setProfileId(OutcomeProfileId id) async {
+    _chosenProfileId = id;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('chosenProfileId', id.toString());
     notifyListeners();
   }
 

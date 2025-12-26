@@ -424,7 +424,45 @@ class GuidanceEngine {
       ));
     }
 
-    // Study
+    // Profile Specific
+    if (profile == OutcomeProfileId.student) {
+      items.add(const ChecklistItem(
+        id: "steady_light",
+        title: "Check study lighting",
+        subtitle: "Cloudy days affect focus",
+        icon: Icons.lightbulb_outline,
+        severity: RiskLevel.low,
+      ));
+      if (pop >= 0.2) {
+        items.add(const ChecklistItem(
+          id: "bag_cover",
+          title: "Books protection",
+          subtitle: "Use a waterproof bag cover",
+          icon: Icons.backpack,
+          severity: RiskLevel.medium,
+        ));
+      }
+    }
+
+    if (profile == OutcomeProfileId.worker) {
+      items.add(const ChecklistItem(
+        id: "safety_gear",
+        title: "Safety gear check",
+        subtitle: "Wear high-vis if visibility low",
+        icon: Icons.engineering,
+        severity: RiskLevel.medium,
+      ));
+      if (wind >= 10) {
+        items.add(const ChecklistItem(
+          id: "loose_objects",
+          title: "Secure workspace",
+          subtitle: "Wind gust alert: secure items",
+          icon: Icons.vibration,
+          severity: RiskLevel.high,
+        ));
+      }
+    }
+
     items.add(const ChecklistItem(
       id: "leave_early",
       title: "Leave 10–15 min early",

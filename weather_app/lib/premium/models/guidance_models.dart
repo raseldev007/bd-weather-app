@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum OutcomeProfileId { general }
+enum OutcomeProfileId { general, student, worker }
 enum ConfidenceLevel { high, medium, low }
 enum RiskLevel { low, medium, high }
 enum PlanBlockId { morning, noon, evening, night }

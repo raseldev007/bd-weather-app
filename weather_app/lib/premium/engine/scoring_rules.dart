@@ -41,7 +41,30 @@ class ScoringRules {
     visibilityLow: 2500,
   );
 
+  static const student = RuleSet(
+    tempIdealMin: 22, tempIdealMax: 26, // More sensitive for focus
+    humidityIdealMax: 65,
+    popHigh: 0.50, popMed: 0.20,
+    windHigh: 10.0, windMed: 6.0,
+    sprayWindMax: 4.0,
+    visibilityLow: 2000,
+  );
+
+  static const worker = RuleSet(
+    tempIdealMin: 18, tempIdealMax: 30, // More tolerant
+    humidityIdealMax: 85,
+    popHigh: 0.70, popMed: 0.40,
+    windHigh: 15.0, windMed: 8.0,
+    sprayWindMax: 4.0,
+    visibilityLow: 3000, // Safety priority
+  );
+
   static RuleSet byProfile(OutcomeProfileId id) {
-    return general;
+    switch (id) {
+      case OutcomeProfileId.student: return student;
+      case OutcomeProfileId.worker: return worker;
+      case OutcomeProfileId.general: return general;
+      default: return general;
+    }
   }
 }

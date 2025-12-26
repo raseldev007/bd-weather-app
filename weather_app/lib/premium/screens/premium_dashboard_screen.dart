@@ -10,6 +10,7 @@ import '../ui/premium_widgets_v4.dart';
 import '../ui/risk_simulator.dart';
 import '../../services/profile_service.dart';
 import '../ui/routine_wizard_sheet.dart';
+import '../outcome_profiles.dart';
 
 class PremiumDashboardScreen extends StatelessWidget {
   final String language; 
@@ -41,6 +42,23 @@ class PremiumDashboardScreen extends StatelessWidget {
                 child: _PremiumToggleRow(
                   enabled: smart.isEnabled,
                   onToggle: (v) => smart.toggleSmartGuidance(v),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _ProfileSelector(
+                  selectedId: smart.selectedProfileId,
+                  onSelected: (id) async {
+                    await smart.setProfileId(id);
+                    // Refresh weather to get new guidance for this profile
+                    if (context.mounted) {
+                      final p = context.read<ProfileService>();
+                      await context.read<WeatherProvider>().refresh(p, language, smart: smart);
+                    }
+                  },
                 ),
               ),
 
@@ -168,6 +186,70 @@ class _PremiumToggleRow extends StatelessWidget {
           Switch(value: enabled, onChanged: onToggle),
         ],
       ),
+    );
+  }
+}
+
+class _ProfileSelector extends StatelessWidget {
+  final OutcomeProfileId selectedId;
+  final ValueChanged<OutcomeProfileId> onSelected;
+
+  const _ProfileSelector({required this.selectedId, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final profiles = PremiumProfiles.getAll().where((p) => 
+      p.id == 'general' || p.id == 'student' || p.id == 'worker'
+    ).toList();
+
+    return Row(
+      children: profiles.map((p) {
+        final isSelected = selectedId.name == p.id;
+        final profileId = OutcomeProfileId.values.firstWhere((e) => e.name == p.id);
+
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => onSelected(profileId),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: EdgeInsets.only(
+                right: p == profiles.last ? 0 : 8,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected ? p.themeColor : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isSelected 
+                  ? [BoxShadow(color: p.themeColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                  : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4)],
+                border: Border.all(
+                  color: isSelected ? p.themeColor : Colors.grey.shade200,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    p.icon,
+                    size: 20,
+                    color: isSelected ? Colors.white : Colors.blueGrey,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    p.title,
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.blueGrey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
