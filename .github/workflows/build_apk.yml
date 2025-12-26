@@ -27,54 +27,64 @@ jobs:
         working-directory: ./weather_app
         run: flutter pub get
 
-      - name: Create dummy firebase_options.dart
+      - name: Create firebase_options.dart
         working-directory: ./weather_app
         run: |
-          echo "Creating dummy firebase_options.dart..."
-          cat <<EOF > lib/firebase_options.dart
-          import 'package:firebase_core/firebase_core.dart';
-          import 'package:flutter/foundation.dart';
+          if [ -n "${{ secrets.FIREBASE_OPTIONS_DART }}" ]; then
+            echo "${{ secrets.FIREBASE_OPTIONS_DART }}" > lib/firebase_options.dart
+            echo "Using real firebase_options.dart from secrets."
+          else
+            echo "Creating dummy firebase_options.dart..."
+            cat <<EOF > lib/firebase_options.dart
+            import 'package:firebase_core/firebase_core.dart';
+            import 'package:flutter/foundation.dart';
 
-          class DefaultFirebaseOptions {
-            static FirebaseOptions get currentPlatform {
-              return const FirebaseOptions(
-                apiKey: 'dummy',
-                appId: 'dummy',
-                messagingSenderId: 'dummy',
-                projectId: 'dummy',
-              );
-            }
-          }
-          EOF
-
-      - name: Create dummy google-services.json
-        working-directory: ./weather_app
-        run: |
-          echo "Creating dummy google-services.json..."
-          cat <<EOF > android/app/google-services.json
-          {
-            "project_info": {
-              "project_number": "123456789012",
-              "project_id": "dummy-project",
-              "storage_bucket": "dummy-project.appspot.com"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:123456789012:android:dummyappid",
-                  "android_client_info": {
-                    "package_name": "com.sira.forecasting"
-                  }
-                },
-                "api_key": [
-                  {
-                    "current_key": "dummy-api-key"
-                  }
-                ]
+            class DefaultFirebaseOptions {
+              static FirebaseOptions get currentPlatform {
+                return const FirebaseOptions(
+                  apiKey: 'dummy',
+                  appId: 'dummy',
+                  messagingSenderId: 'dummy',
+                  projectId: 'dummy',
+                );
               }
-            ]
-          }
+            }
           EOF
+          fi
+
+      - name: Create google-services.json
+        working-directory: ./weather_app
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
+            echo "Using real google-services.json from secrets."
+          else
+            echo "Creating dummy google-services.json..."
+            cat <<EOF > android/app/google-services.json
+            {
+              "project_info": {
+                "project_number": "123456789012",
+                "project_id": "dummy-project",
+                "storage_bucket": "dummy-project.appspot.com"
+              },
+              "client": [
+                {
+                  "client_info": {
+                    "mobilesdk_app_id": "1:123456789012:android:dummyappid",
+                    "android_client_info": {
+                      "package_name": "com.sira.forecasting"
+                    }
+                  },
+                  "api_key": [
+                    {
+                      "current_key": "dummy-api-key"
+                    }
+                  ]
+                }
+              ]
+            }
+          EOF
+          fi
 
       - name: Generate Debug Keystore
         run: |
