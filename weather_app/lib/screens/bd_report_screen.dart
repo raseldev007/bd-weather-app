@@ -145,10 +145,11 @@ class _BDReportScreenState extends State<BDReportScreen> {
                   ),
                   Text(data['condition'], style: const TextStyle(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
                       _buildMiniChip(isBn ? "বৃষ্টি: " : "Rain: ", data['rainRisk'], data['rainRisk'] == "High" || data['rainRisk'] == "উচ্চ" ? Colors.redAccent : Colors.greenAccent),
-                      const SizedBox(width: 8),
                       _buildMiniChip(isBn ? "তাপ: " : "Heat: ", data['heatStress'], data['heatStress'] == "High" || data['heatStress'] == "তীব্র" ? Colors.orangeAccent : Colors.greenAccent),
                     ],
                   )

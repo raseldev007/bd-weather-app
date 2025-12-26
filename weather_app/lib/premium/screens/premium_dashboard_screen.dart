@@ -26,61 +26,65 @@ class PremiumDashboardScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F7FB),
         body: SafeArea(
-          child: Column(
-            children: [
-              _TopBar(
-                locationName: weather.selectedName ?? "—",
-                onRefresh: () async {
-                  final p = context.read<ProfileService>();
-                  await context.read<WeatherProvider>().refresh(p, language, smart: smart);
-                },
-                onRoutine: () => RoutineWizardSheet.show(context),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _PremiumToggleRow(
-                  enabled: smart.isEnabled,
-                  onToggle: (v) => smart.toggleSmartGuidance(v),
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      _TopBar(
+                        locationName: weather.selectedName ?? "—",
+                        onRefresh: () async {
+                          final p = context.read<ProfileService>();
+                          await context.read<WeatherProvider>().refresh(p, language, smart: smart);
+                        },
+                        onRoutine: () => RoutineWizardSheet.show(context),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _PremiumToggleRow(
+                          enabled: smart.isEnabled,
+                          onToggle: (v) => smart.toggleSmartGuidance(v),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _ProfileSelector(
+                          selectedId: smart.selectedProfileId,
+                          onSelected: (id) async {
+                            await smart.setProfileId(id);
+                            if (context.mounted) {
+                              final p = context.read<ProfileService>();
+                              await context.read<WeatherProvider>().refresh(p, language, smart: smart);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              
-              const SizedBox(height: 12),
-              
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _ProfileSelector(
-                  selectedId: smart.selectedProfileId,
-                  onSelected: (id) async {
-                    await smart.setProfileId(id);
-                    // Refresh weather to get new guidance for this profile
-                    if (context.mounted) {
-                      final p = context.read<ProfileService>();
-                      await context.read<WeatherProvider>().refresh(p, language, smart: smart);
-                    }
-                  },
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SliverAppBarDelegate(
+                    child: Container(
+                      color: const Color(0xFFF6F7FB),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: _TabBar(),
+                    ),
+                    minHeight: 62,
+                    maxHeight: 62,
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _TabBar(),
-              ),
-
-              const SizedBox(height: 10),
-
-              Expanded(
-                child: _Body(
-                  isLoading: weather.isLoading,
-                  error: weather.error,
-                  insights: weather.homeInsights,
-                  smartEnabled: smart.isEnabled,
-                  language: language,
-                ),
-              ),
-            ],
+              ];
+            },
+            body: _Body(
+              isLoading: weather.isLoading,
+              error: weather.error,
+              insights: weather.homeInsights,
+              smartEnabled: smart.isEnabled,
+              language: language,
+            ),
           ),
         ),
       ),
@@ -666,5 +670,33 @@ class _SoftHintCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  @override
+  double get minExtent => minHeight;
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
   }
 }
