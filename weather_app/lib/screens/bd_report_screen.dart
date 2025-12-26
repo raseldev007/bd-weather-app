@@ -82,6 +82,12 @@ class _BDReportScreenState extends State<BDReportScreen> {
 
   Widget _buildDivisionCard(Map<String, dynamic> data, bool isBn) {
     final units = context.watch<UnitsProvider>();
+    final name = data['name'] ?? (isBn ? "অজানা" : "Unknown");
+    final temp = (data['temp'] as num?)?.toDouble() ?? 0.0;
+    final condition = data['condition'] ?? (isBn ? "অন্যান্য" : "Other");
+    final rainRisk = data['rainRisk'] ?? (isBn ? "নাই" : "None");
+    final heatStress = data['heatStress'] ?? (isBn ? "নাই" : "None");
+
     return GestureDetector(
       onTap: () async {
         final provider = context.read<WeatherProvider>();
@@ -89,14 +95,13 @@ class _BDReportScreenState extends State<BDReportScreen> {
         final settings = context.read<SettingsService>();
         final smart = context.read<SmartGuidanceProvider>();
 
-        // Disable live auto if it was on
         provider.disableLiveAuto();
 
         await provider.loadByLocation(
-          data['lat'],
-          data['lon'],
+          (data['lat'] as num?)?.toDouble() ?? 0.0,
+          (data['lon'] as num?)?.toDouble() ?? 0.0,
           setMode: WeatherMode.manual,
-          name: data['name'],
+          name: name,
           profile: profile,
           language: settings.language,
           smart: smart,
@@ -110,9 +115,10 @@ class _BDReportScreenState extends State<BDReportScreen> {
             // Background Image
             Positioned.fill(
               child: Image.asset(
-                divisionImageMap[data['name']] ?? "assets/divisions/default.png",
+                divisionImageMap[name] ?? "assets/divisions/default.png",
                 fit: BoxFit.cover,
                 cacheWidth: 600,
+                errorBuilder: (context, error, stackTrace) => Container(color: Colors.blueGrey),
               ),
             ),
             // Dark Overlay
@@ -136,23 +142,22 @@ class _BDReportScreenState extends State<BDReportScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(data['name'], style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
+                  Text(name, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white)),
                   const Spacer(),
                   Row(
                     children: [
-                      Text("${units.formatTemp((data['temp'] as num).toDouble()).replaceAll('°C', '°').replaceAll('°F', '°')}", style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text("${units.formatTemp(temp).replaceAll('°C', '°').replaceAll('°F', '°')}", style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
                       const Spacer(),
                       const Icon(Icons.wb_cloudy_outlined, color: Colors.white70),
                     ],
                   ),
-                  Text(data['condition'], style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                  Text(condition, style: const TextStyle(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
+                  Row(
                     children: [
-                      _buildMiniChip(isBn ? "বৃষ্টি: " : "Rain: ", data['rainRisk'], data['rainRisk'] == "High" || data['rainRisk'] == "উচ্চ" ? Colors.redAccent : Colors.greenAccent),
-                      _buildMiniChip(isBn ? "তাপ: " : "Heat: ", data['heatStress'], data['heatStress'] == "High" || data['heatStress'] == "তীব্র" ? Colors.orangeAccent : Colors.greenAccent),
+                      _buildMiniChip(isBn ? "বৃষ্টি: " : "Rain: ", rainRisk, rainRisk == "High" || rainRisk == "উচ্চ" ? Colors.redAccent : Colors.greenAccent),
+                      const SizedBox(width: 8),
+                      _buildMiniChip(isBn ? "তাপ: " : "Heat: ", heatStress, heatStress == "High" || heatStress == "তীব্র" ? Colors.orangeAccent : Colors.greenAccent),
                     ],
                   )
                 ],
@@ -175,7 +180,7 @@ class _BDReportScreenState extends State<BDReportScreen> {
         ),
         child: Text(
           "$label$value",
-          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
