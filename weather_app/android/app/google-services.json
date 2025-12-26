@@ -1,39 +1,76 @@
 {
-    "project_info": {
-        "project_number": "669799446176",
-        "project_id": "sira-weather-forcasting-app",
-        "storage_bucket": "sira-weather-forcasting-app.firebasestorage.app"
-    },
-    "client": [
-        {
-            "client_info": {
-                "mobilesdk_app_id": "1:669799446176:android:2a98c4665d8a1873ca3bc5",
-                "android_client_info": {
-                    "package_name": "com.sira.forecasting"
-                }
-            },
-            "oauth_client": [
-                {
-                    "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
-                    "client_type": 3
-                }
-            ],
-            "api_key": [
-                {
-                    "current_key": "AIzaSyDxfvFMuPcvb7UAUKSa9zIlbd1DZ5yZSLU"
-                }
-            ],
-            "services": {
-                "appinvite_service": {
-                    "other_platform_oauth_client": [
-                        {
-                            "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
-                            "client_type": 3
-                        }
-                    ]
-                }
-            }
+  "project_info": {
+    "project_number": "669799446176",
+    "project_id": "sira-weather-forcasting-app",
+    "storage_bucket": "sira-weather-forcasting-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669799446176:android:797b04dcf388b10bca3bc5",
+        "android_client_info": {
+          "package_name": "com.rasel.bdweather"
         }
-    ],
-    "configuration_version": "1"
+      },
+      "oauth_client": [
+        {
+          "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxfvFMuPcvb7UAUKSa9zIlbd1DZ5yZSLU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669799446176:android:2a98c4665d8a1873ca3bc5",
+        "android_client_info": {
+          "package_name": "com.sira.forecasting"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669799446176-1o215daac1bgr0mu99vgf1h01lo11n63.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sira.forecasting",
+            "certificate_hash": "8939d0029bb6493cdbb33942848aa390ade792d8"
+          }
+        },
+        {
+          "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxfvFMuPcvb7UAUKSa9zIlbd1DZ5yZSLU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669799446176-j1huep63hd7t1e7kcpb0pcruc037s588.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }
