@@ -288,12 +288,14 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
             Expanded(
               child: GestureDetector(
                 onTap: () => RoutineWizardSheet.show(context),
-                child: Row(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    CircleAvatar(backgroundColor: Colors.teal.withOpacity(0.1), child: const Icon(Icons.auto_awesome, color: Colors.teal, size: 16)),
+                    CircleAvatar(backgroundColor: Colors.teal.withOpacity(0.1), radius: 12, child: const Icon(Icons.auto_awesome, color: Colors.teal, size: 12)),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text("General Premium", style: GoogleFonts.outfit(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
                         Text("Routine: Study & Commute", style: GoogleFonts.outfit(color: Colors.grey, fontSize: 10)),
@@ -306,30 +308,28 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
               ),
             ),
             // Live Auto Toggle in Premium Header
-            Builder(builder: (context) {
-              final settings = Provider.of<SettingsService>(context, listen: false);
-              final isBn = settings.language == 'bn';
-              return IconButton(
-                icon: Icon(
-                  provider.liveAutoEnabled ? Icons.location_on : Icons.location_off_outlined,
-                  color: provider.liveAutoEnabled ? Colors.teal : Colors.grey,
-                  size: 20,
-                ),
-                tooltip: provider.liveAutoEnabled 
-                  ? (isBn ? "লাইভ: চালু" : "Live: ON")
-                  : (isBn ? "লাইভ লোকেশন" : "Use Live Location"),
-                onPressed: () {
-                  if (provider.liveAutoEnabled) {
-                    provider.disableLiveAuto();
-                  } else {
-                    provider.enableLiveAuto(profile, settings.language, smart);
-                  }
-                },
-              );
-            }),
             IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              icon: Icon(
+                provider.liveAutoEnabled ? Icons.location_on : Icons.location_off_outlined,
+                color: provider.liveAutoEnabled ? Colors.teal : Colors.grey,
+                size: 20,
+              ),
+              onPressed: () {
+                final settings = Provider.of<SettingsService>(context, listen: false);
+                if (provider.liveAutoEnabled) {
+                  provider.disableLiveAuto();
+                } else {
+                  provider.enableLiveAuto(profile, settings.language, smart);
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
               icon: const Icon(Icons.dashboard_customize, color: Colors.teal),
-              tooltip: "Open Premium Dashboard",
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumDashboardScreen())),
             ),
           ],
@@ -427,11 +427,13 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
   }
   
   Widget _buildBestTimeModule(UIHomeInsights data, bool isBn) {
-     return Column(
-       children: const [
-         Expanded(child: BestTimeTimelineV4()),
-         RiskSimulator(),
-       ],
+     return SingleChildScrollView(
+       child: Column(
+         children: const [
+           BestTimeTimelineV4(),
+           RiskSimulator(),
+         ],
+       ),
      );
   }
 

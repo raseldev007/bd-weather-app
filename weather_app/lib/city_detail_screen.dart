@@ -82,13 +82,21 @@ class _CityDetailScreenState extends State<CityDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("${temp.toStringAsFixed(1)}°C", style: GoogleFonts.outfit(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text(condition, style: GoogleFonts.outfit(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.w500)),
-            ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("${temp.toStringAsFixed(1)}°C", 
+                    style: GoogleFonts.outfit(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white)
+                  ),
+                ),
+                Text(condition, style: GoogleFonts.outfit(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
+          const SizedBox(width: 16),
           Column(
             children: [
               const Icon(Icons.water_drop, color: Colors.lightBlueAccent, size: 32),

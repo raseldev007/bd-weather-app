@@ -377,8 +377,8 @@ class PremiumScoreModuleV4 extends StatelessWidget {
             children: [
               Icon(icon, color: Colors.grey.shade500, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: GoogleFonts.outfit(color: Colors.grey.shade700, fontSize: 14, fontWeight: FontWeight.w800)),
-              const Spacer(),
+              Flexible(child: Text(title, style: GoogleFonts.outfit(color: Colors.grey.shade700, fontSize: 14, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis)),
+              const SizedBox(width: 8),
               _Pill(
                 bg: color.withOpacity(0.10),
                 border: color.withOpacity(0.25),
