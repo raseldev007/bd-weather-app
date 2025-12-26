@@ -33,6 +33,8 @@ jobs:
           if [ -n "${{ secrets.FIREBASE_OPTIONS_DART }}" ]; then
             echo "${{ secrets.FIREBASE_OPTIONS_DART }}" > lib/firebase_options.dart
             echo "Using real firebase_options.dart from secrets."
+          elif [ -f "lib/firebase_options.dart" ] && grep -q "appId" "lib/firebase_options.dart"; then
+            echo "Real firebase_options.dart already exists, skipping creation."
           else
             echo "Creating dummy firebase_options.dart..."
             cat <<EOF > lib/firebase_options.dart
@@ -58,6 +60,8 @@ jobs:
           if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
             echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
             echo "Using real google-services.json from secrets."
+          elif [ -f "android/app/google-services.json" ] && grep -q "project_id" "android/app/google-services.json"; then
+            echo "Real google-services.json already exists, skipping creation."
           else
             echo "Creating dummy google-services.json..."
             cat <<EOF > android/app/google-services.json
@@ -80,8 +84,8 @@ jobs:
                       "current_key": "dummy-api-key"
                     }
                   ]
-                }
-              ]
+                    }
+                ]
             }
           EOF
           fi
