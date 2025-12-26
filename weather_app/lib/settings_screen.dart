@@ -24,20 +24,6 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          _SectionHeader(title: isBn ? "অ্যাকাউন্ট ও সাবস্ক্রিপশন" : "Account & Subscription"),
-          ListTile(
-            leading: const Icon(Icons.star, color: Colors.amber),
-            title: Text(isBn ? "স্মার্ট গাইডেন্স" : "Smart Guidance"),
-            subtitle: Text(profile.isPremium 
-              ? (isBn ? "সাবস্ক্রিপশন সক্রিয়" : "Subscription Active") 
-              : (isBn ? "সঠিক সিদ্ধান্ত নিতে প্রো ফিচার আনলক করুন" : "Unlock decision support features")),
-            trailing: Switch(
-              value: profile.isPremium,
-              onChanged: (val) => profile.setPremium(val),
-              activeThumbColor: Colors.amber,
-            ),
-          ),
-          const Divider(),
           _SectionHeader(title: isBn ? "সতর্কতা" : "Alerts"),
           SwitchListTile(
             title: Text(isBn ? "বৃষ্টির সতর্কতা" : "Rain Alerts"),
