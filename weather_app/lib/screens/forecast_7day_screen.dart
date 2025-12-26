@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
 import '../utils/weather_theme.dart';
 import '../services/settings_service.dart';
+import '../providers/units_provider.dart';
 
 class Forecast7DayScreen extends StatelessWidget {
   const Forecast7DayScreen({super.key});
@@ -11,6 +12,7 @@ class Forecast7DayScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<WeatherProvider>(context);
     final settings = Provider.of<SettingsService>(context);
+    final units = Provider.of<UnitsProvider>(context);
     final isBn = settings.language == 'bn';
 
     return Scaffold(
@@ -42,7 +44,7 @@ class Forecast7DayScreen extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold)
                     ),
                     title: Text(condition),
-                    trailing: Text("${tempMin.round()}° / ${tempMax.round()}°"),
+                    trailing: Text("${units.formatTemp(tempMin).replaceAll('°C', '°').replaceAll('°F', '°')} / ${units.formatTemp(tempMax).replaceAll('°C', '°').replaceAll('°F', '°')}"),
                   ),
                 );
               },

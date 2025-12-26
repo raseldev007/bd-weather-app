@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/units_provider.dart';
 
 class PremiumHeroCard extends StatelessWidget {
   final double temp;
@@ -19,6 +21,7 @@ class PremiumHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final units = context.watch<UnitsProvider>();
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       padding: const EdgeInsets.all(24),
@@ -43,8 +46,8 @@ class PremiumHeroCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                    Text(condition, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 18)),
-                   Text("${temp.toStringAsFixed(1)}°", style: GoogleFonts.outfit(color: Colors.white, fontSize: 64, fontWeight: FontWeight.bold, height: 1.0)),
-                   Text("Feels like ${feelsLike.toStringAsFixed(1)}°", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+                   Text("${units.formatTemp(temp).replaceAll('°C', '°').replaceAll('°F', '°')}", style: GoogleFonts.outfit(color: Colors.white, fontSize: 64, fontWeight: FontWeight.bold, height: 1.0)),
+                   Text("Feels like ${units.formatTemp(feelsLike)}", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
                 ],
               ),
               // Could add a big icon here

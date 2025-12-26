@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'services/settings_service.dart';
 import 'services/profile_service.dart';
 import 'services/auth_service.dart';
+import 'services/alert_engine.dart';
+import 'providers/weather_provider.dart';
+import 'providers/units_provider.dart';
 import 'contact_developer_screen.dart';
 import 'login_screen.dart';
 
@@ -29,14 +32,44 @@ class SettingsScreen extends StatelessWidget {
             title: Text(isBn ? "বৃষ্টির সতর্কতা" : "Rain Alerts"),
             subtitle: Text(isBn ? "বৃষ্টির সম্ভাবনা থাকলে জানান" : "Notify when rain is expected"),
             value: settings.rainAlerts,
-            onChanged: settings.toggleRain,
+            onChanged: (val) async {
+              final weather = Provider.of<WeatherProvider>(context, listen: false);
+              final success = await settings.toggleRain(val);
+              if (success) {
+                 if (val) {
+                   AlertEngine.evaluateAndNotify(
+                     current: weather.currentWeather,
+                     forecast: weather.forecast,
+                   );
+                 }
+              } else if (val && context.mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(content: Text(isBn ? "সতর্কতা পেতে নোটিফিকেশন পারমিশন এনাবল করুন" : "Enable notification permission to receive alerts."))
+                 );
+              }
+            },
             activeThumbColor: Colors.teal,
           ),
           SwitchListTile(
             title: Text(isBn ? "দাবদাহ সতর্কতা" : "Heatwave Alerts"),
             subtitle: Text(isBn ? "প্রচণ্ড গরম থাকলে জানান" : "Notify about extreme temperatures"),
             value: settings.heatAlerts,
-            onChanged: settings.toggleHeat,
+            onChanged: (val) async {
+              final weather = Provider.of<WeatherProvider>(context, listen: false);
+              final success = await settings.toggleHeat(val);
+              if (success) {
+                 if (val) {
+                    AlertEngine.evaluateAndNotify(
+                      current: weather.currentWeather,
+                      forecast: weather.forecast,
+                    );
+                 }
+              } else if (val && context.mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(content: Text(isBn ? "সতর্কতা পেতে নোটিফিকেশন পারমিশন এনাবল করুন" : "Enable notification permission to receive alerts."))
+                 );
+              }
+            },
             activeThumbColor: Colors.teal,
           ),
           const Divider(),
@@ -56,11 +89,15 @@ class SettingsScreen extends StatelessWidget {
           ),
           ListTile(
             title: Text(isBn ? "তাপমাত্রার একক" : "Temperature Unit"),
-            subtitle: Text("${isBn ? "বর্তমান" : "Current"}: ${settings.unit}"),
+            subtitle: Text("${isBn ? "বর্তমান" : "Current"}: ${Provider.of<UnitsProvider>(context).unitLabel}"),
             trailing: DropdownButton<String>(
-              value: settings.unit,
+              value: Provider.of<UnitsProvider>(context).unitLabel,
               underline: Container(),
-              onChanged: (val) => settings.setUnit(val!),
+              onChanged: (val) {
+                if (val != null) {
+                  Provider.of<UnitsProvider>(context, listen: false).setUnit(val);
+                }
+              },
               items: ["°C", "°F"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
             ),
           ),

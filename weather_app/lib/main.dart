@@ -6,17 +6,21 @@ import 'services/settings_service.dart';
 import 'services/news_service.dart';
 import 'services/weather_service.dart'; // Keep if used elsewhere, or remove if not needed directly
 import 'providers/weather_provider.dart';
+import 'providers/units_provider.dart';
 import 'services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'premium/smart_guidance_provider.dart';
 
 import 'auth_gate.dart';
 import 'splash_screen.dart';
-
 import 'firebase_options.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Notifications
+  await NotificationService().init();
   
   // Initialize Firebase (Safely)
   try {
@@ -55,6 +59,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SettingsService()),
         ChangeNotifierProvider(create: (_) => NewsService()),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        ChangeNotifierProvider(create: (_) => UnitsProvider(prefs)),
         ChangeNotifierProvider(create: (_) => SmartGuidanceProvider(prefs)),
       ],
       child: const MyApp(),

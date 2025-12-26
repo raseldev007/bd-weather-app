@@ -106,7 +106,7 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
         position.latitude, 
         position.longitude, 
         setMode: WeatherMode.auto,
-        name: "My Location",
+        name: null,
         profile: profile,
         language: language,
         smart: smart
@@ -232,7 +232,8 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                           feelsLike: (uiData.hero['feelsLike'] as num).toDouble(),
                           condition: uiData.hero['condition'].toString(),
                           actionSentence: decision,
-                          chips: chips
+                          chips: chips,
+                          locationName: provider.selectedName ?? "My Location",
                         ),
                       );
                     }
@@ -297,7 +298,10 @@ class _WeatherScreenState extends State<WeatherScreen> with SingleTickerProvider
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text("General Premium", style: GoogleFonts.outfit(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(
+                          "General Premium",
+                          style: GoogleFonts.outfit(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
                         Text("Routine: Study & Commute", style: GoogleFonts.outfit(color: Colors.grey, fontSize: 10)),
                       ],
                     ),

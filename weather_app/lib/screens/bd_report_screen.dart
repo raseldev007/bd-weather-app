@@ -7,6 +7,7 @@ import '../services/profile_service.dart';
 import '../services/settings_service.dart';
 import '../premium/smart_guidance_provider.dart';
 import '../data/division_images.dart';
+import '../providers/units_provider.dart';
 
 class BDReportScreen extends StatefulWidget {
   const BDReportScreen({super.key});
@@ -80,6 +81,7 @@ class _BDReportScreenState extends State<BDReportScreen> {
   }
 
   Widget _buildDivisionCard(Map<String, dynamic> data, bool isBn) {
+    final units = context.watch<UnitsProvider>();
     return GestureDetector(
       onTap: () async {
         final provider = context.read<WeatherProvider>();
@@ -138,7 +140,7 @@ class _BDReportScreenState extends State<BDReportScreen> {
                   const Spacer(),
                   Row(
                     children: [
-                      Text("${data['temp'].round()}°", style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text("${units.formatTemp((data['temp'] as num).toDouble()).replaceAll('°C', '°').replaceAll('°F', '°')}", style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
                       const Spacer(),
                       const Icon(Icons.wb_cloudy_outlined, color: Colors.white70),
                     ],

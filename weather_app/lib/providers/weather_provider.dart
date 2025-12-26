@@ -10,6 +10,8 @@ import '../premium/models/routine_models.dart';
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
+import '../services/alert_engine.dart';
+import '../services/settings_service.dart';
 
 enum WeatherMode { auto, manual }
 
@@ -136,8 +138,7 @@ class WeatherProvider extends ChangeNotifier {
       lastLat = lat;
       lastLon = lon;
       
-      // Update selected name logic
-      selectedName = name ?? "My Location";
+      // Update selected name logic (removed early assignment)
 
       // 1. Fetch Raw Data (Parallel-ish)
       final weatherFuture = _service.getCurrentByLocation(lat, lon);
@@ -147,6 +148,17 @@ class WeatherProvider extends ChangeNotifier {
       
       currentWeather = results[0];
       forecast = results[1];
+      
+      // ✅ Force a reliable display name:
+      final apiName = (currentWeather?['name'] ?? "").toString().trim();
+
+      if (name != null && name.trim().isNotEmpty) {
+        selectedName = name.trim();
+      } else if (apiName.isNotEmpty) {
+        selectedName = apiName; // GPS / API city
+      } else {
+        selectedName = "My Location";
+      }
       
       // 2. Generate Premium Insights
       if (currentWeather != null) {
@@ -173,14 +185,17 @@ class WeatherProvider extends ChangeNotifier {
                  profile,
                  language
               );
-          } else {
+
+               // STEP 8: Trigger alerts
+               AlertEngine.evaluateAndNotify(
+                 current: currentWeather,
+                 forecast: forecast,
+               );
+           } else {
              // Fallback if smart provider not passed (should not happen in updated UI)
              // Maybe recreate legacy insights or empty
           }
           
-          if (name == null) {
-             selectedName = currentWeather!['name'];
-          }
       }
 
     } catch (e) {
@@ -400,7 +415,7 @@ class WeatherProvider extends ChangeNotifier {
         pos.latitude,
         pos.longitude,
         setMode: WeatherMode.auto,
-        name: "My Location",
+        name: null,
         profile: profile,
         language: language,
         smart: smart,
@@ -426,7 +441,7 @@ class WeatherProvider extends ChangeNotifier {
              newPos.latitude,
              newPos.longitude,
              setMode: WeatherMode.auto,
-             name: "My Location",
+             name: null,
              profile: profile,
              language: language,
              smart: smart,

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../providers/units_provider.dart';
 import '../smart_guidance_provider.dart';
 import '../models/guidance_models.dart';
 
@@ -33,6 +34,7 @@ class PremiumHeroCardV4 extends StatelessWidget {
   final double feelsLike;
   final String condition;
   final String actionSentence;
+  final String locationName;
 
   /// chips from guidance mapping:
   /// [{title, level, text, reasons: [..]}]
@@ -45,6 +47,7 @@ class PremiumHeroCardV4 extends StatelessWidget {
     required this.condition,
     required this.actionSentence,
     required this.chips,
+    required this.locationName,
   });
 
   IconData _iconForCondition(String c) {
@@ -133,6 +136,7 @@ class PremiumHeroCardV4 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final units = context.watch<UnitsProvider>();
     final icon = _iconForCondition(condition);
 
     return Container(
@@ -166,14 +170,31 @@ class PremiumHeroCardV4 extends StatelessWidget {
                     Text(condition,
                         style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16)),
                     const SizedBox(height: 6),
-                    Text("${temp.toStringAsFixed(1)}°",
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 62,
-                          fontWeight: FontWeight.w800,
-                          height: 1.0,
-                        )),
-                    Text("Feels like ${feelsLike.toStringAsFixed(1)}°",
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(units.formatTemp(temp).replaceAll('°C', '°').replaceAll('°F', '°'),
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 62,
+                              fontWeight: FontWeight.w800,
+                              height: 1.0,
+                            )),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            locationName,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              color: Colors.white70,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text("Feels like ${units.formatTemp(feelsLike)}",
                         style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
                   ],
                 ),

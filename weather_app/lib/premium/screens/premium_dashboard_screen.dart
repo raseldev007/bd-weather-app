@@ -356,6 +356,7 @@ class _OverviewTab extends StatelessWidget {
             condition: hero["condition"]?.toString() ?? "—",
             actionSentence: hero["action"]?.toString() ?? "—",
             chips: chips,
+            locationName: context.read<WeatherProvider>().selectedName ?? "My Location",
           ),
 
           _WhyRow(hero: hero),

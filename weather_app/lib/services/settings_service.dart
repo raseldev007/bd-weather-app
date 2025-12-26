@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notification_service.dart';
 
 class SettingsService extends ChangeNotifier {
   bool _rainAlerts = true;
@@ -22,9 +23,9 @@ class SettingsService extends ChangeNotifier {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    _rainAlerts = prefs.getBool('rainAlerts') ?? true;
-    _heatAlerts = prefs.getBool('heatAlerts') ?? true;
-    _windAlerts = prefs.getBool('windAlerts') ?? true;
+    _rainAlerts = prefs.getBool('rain_alerts_enabled') ?? true;
+    _heatAlerts = prefs.getBool('heat_alerts_enabled') ?? true;
+    _windAlerts = prefs.getBool('wind_alerts_enabled') ?? true;
     _lowDataMode = prefs.getBool('lowDataMode') ?? false;
     _unit = prefs.getString('unit') ?? "°C";
     _language = prefs.getString('language') ?? "bn";
@@ -45,18 +46,30 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleRain(bool value) async {
+  Future<bool> toggleRain(bool value) async {
+    if (value) {
+      final granted = await NotificationService().requestPermission();
+      if (!granted) return false;
+    }
+    
     _rainAlerts = value;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('rainAlerts', value);
+    await prefs.setBool('rain_alerts_enabled', value);
     notifyListeners();
+    return true;
   }
 
-  Future<void> toggleHeat(bool value) async {
+  Future<bool> toggleHeat(bool value) async {
+    if (value) {
+      final granted = await NotificationService().requestPermission();
+      if (!granted) return false;
+    }
+
     _heatAlerts = value;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('heatAlerts', value);
+    await prefs.setBool('heat_alerts_enabled', value);
     notifyListeners();
+    return true;
   }
 
   Future<void> toggleWind(bool value) async {
